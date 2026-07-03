@@ -161,7 +161,7 @@ public class LanguageModelImpl implements LanguageModel {
         var textStream = fullStream
             .filter(part -> PartType.TEXT_DELTA.equals(part.getType()))
             .map(TextStreamPart::getDelta)
-            .filter(this::hasText);
+            .filter(this::hasContent);
         var result = fullStream.collectList()
             .map(parts -> resultFromStreamParts(request, parts))
             .cache();
@@ -420,7 +420,7 @@ public class LanguageModelImpl implements LanguageModel {
         accumulator.accept(response);
         var extraction = streamExtraction(response);
         var reasoning = extraction.reasoningText();
-        if (hasText(reasoning)) {
+        if (hasContent(reasoning)) {
             if (accumulator.textStarted) {
                 accumulator.textStarted = false;
                 parts.add(TextStreamPart.textEnd(accumulator.textId));
@@ -437,7 +437,7 @@ public class LanguageModelImpl implements LanguageModel {
                 reasoningProviderMetadata(reasoning, metadata)));
         }
         var text = extraction.text();
-        if (hasText(text)) {
+        if (hasContent(text)) {
             if (accumulator.reasoningStarted) {
                 accumulator.reasoningStarted = false;
                 parts.add(TextStreamPart.reasoningEnd(accumulator.reasoningId));
@@ -565,7 +565,7 @@ public class LanguageModelImpl implements LanguageModel {
         accumulator.reasoningParts().stream()
             .map(GenerationContentPart::reasoning)
             .forEach(content::add);
-        if (hasText(accumulator.text.toString())) {
+        if (hasContent(accumulator.text.toString())) {
             content.add(GenerationContentPart.text(accumulator.text.toString()));
         }
         toolCalls.stream().map(GenerationContentPart::toolCall).forEach(content::add);
@@ -754,7 +754,7 @@ public class LanguageModelImpl implements LanguageModel {
         var text = state.allContent.stream()
             .filter(part -> PartType.isText(part.getType()))
             .map(GenerationContentPart::getText)
-            .filter(this::hasText)
+            .filter(this::hasContent)
             .collect(Collectors.joining());
         var reasoning = state.steps.isEmpty()
             ? List.<ReasoningPart>of()
@@ -1301,7 +1301,7 @@ public class LanguageModelImpl implements LanguageModel {
         List<ReasoningPart> reasoning, List<ToolCall> toolCalls) {
         var content = new ArrayList<GenerationContentPart>();
         reasoning.stream().map(GenerationContentPart::reasoning).forEach(content::add);
-        if (hasText(text)) {
+        if (hasContent(text)) {
             content.add(GenerationContentPart.text(text));
         }
         content.addAll(responseMapper.sourceAndFileParts(response));
@@ -1436,7 +1436,7 @@ public class LanguageModelImpl implements LanguageModel {
             .toList();
         var text = safeSteps.stream()
             .map(GenerationStep::getText)
-            .filter(this::hasText)
+            .filter(this::hasContent)
             .collect(Collectors.joining());
         var reasoning = finalStep != null ? nullSafe(finalStep.getReasoning()) : List.<ReasoningPart>of();
         var reasoningText = reasoning.stream()
@@ -1589,7 +1589,8 @@ public class LanguageModelImpl implements LanguageModel {
         var extraction = streamExtraction(response);
         var text = extraction.text();
         var reasoning = extraction.reasoningText();
-        if (hasText(reasoning)) {
+        if (hasContent(reasoning)) {
+            state.reasoning.append(reasoning);
             if (state.textStarted.get()) {
                 state.textStarted.set(false);
                 parts.add(TextStreamPart.textEnd(state.textId));
@@ -1601,7 +1602,8 @@ public class LanguageModelImpl implements LanguageModel {
             parts.add(TextStreamPart.reasoningDelta(state.reasoningId, reasoning,
                 reasoningProviderMetadata(reasoning, response.getResult().getOutput().getMetadata())));
         }
-        if (hasText(text)) {
+        if (hasContent(text)) {
+            state.text.append(text);
             if (state.reasoningStarted.get()) {
                 state.reasoningStarted.set(false);
                 parts.add(TextStreamPart.reasoningEnd(state.reasoningId));
@@ -1633,34 +1635,36 @@ public class LanguageModelImpl implements LanguageModel {
                 state.textStarted.set(false);
                 parts.add(TextStreamPart.textEnd(state.textId));
             }
-            var reasoningParts = responseMapper.reasoningParts(reasoning);
+            var accumulatedText = state.text.toString();
+            var accumulatedReasoning = state.reasoning.toString();
+            var reasoningParts = responseMapper.reasoningParts(accumulatedReasoning);
             var warnings = mergeWarnings(
                 mergeWarnings(responseMapper.mapWarnings(response), requestWarnings(request)),
                 mergeWarnings(run.warnings(),
                     reasoningReturnedWhileDisabledWarnings(request, reasoningParts)));
             parts.add(TextStreamPart.finishStep(0, finishReason, rawFinishReason, usage,
                 warnings, responseMapper.mapRequestMetadata(response),
-                mapResponseMetadata(response, responseMapper.extractText(response), reasoningParts,
+                mapResponseMetadata(response, accumulatedText, reasoningParts,
                     List.of()), responseMapper.mapMetadata(response)));
             var step = GenerationStep.builder()
                 .stepIndex(0)
-                .text(text)
-                .reasoningText(hasText(reasoning) ? reasoning : null)
+                .text(accumulatedText)
+                .reasoningText(hasText(accumulatedReasoning) ? accumulatedReasoning : null)
                 .reasoning(reasoningParts)
                 .finishReason(finishReason)
                 .rawFinishReason(rawFinishReason)
                 .usage(usage)
                 .warnings(warnings)
                 .request(responseMapper.mapRequestMetadata(response))
-                .response(mapResponseMetadata(response, responseMapper.extractText(response), reasoningParts,
+                .response(mapResponseMetadata(response, accumulatedText, reasoningParts,
                     List.of()))
                 .providerMetadata(responseMapper.mapMetadata(response))
                 .build();
             step.setResponseMessages(responseMessages(step.getResponse()));
             run.stepFinish(0, step, List.of(step));
             run.finish(GenerateTextResult.builder()
-                .text(text)
-                .reasoningText(hasText(reasoning) ? reasoning : null)
+                .text(accumulatedText)
+                .reasoningText(hasText(accumulatedReasoning) ? accumulatedReasoning : null)
                 .finishReason(finishReason)
                 .rawFinishReason(rawFinishReason)
                 .usage(usage)
@@ -1770,6 +1774,10 @@ public class LanguageModelImpl implements LanguageModel {
         return value != null && !value.isBlank();
     }
 
+    private boolean hasContent(String value) {
+        return value != null && !value.isEmpty();
+    }
+
     private String safeErrorMessage(Throwable e) {
         return e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
     }
@@ -1792,6 +1800,8 @@ public class LanguageModelImpl implements LanguageModel {
         private final AtomicBoolean finished = new AtomicBoolean(false);
         private final AtomicBoolean textStarted = new AtomicBoolean(false);
         private final AtomicBoolean reasoningStarted = new AtomicBoolean(false);
+        private final StringBuilder text = new StringBuilder();
+        private final StringBuilder reasoning = new StringBuilder();
     }
 
     private final class StreamResponseAggregation {
@@ -1833,7 +1843,7 @@ public class LanguageModelImpl implements LanguageModel {
         }
 
         private void appendText(AssistantMessage output) {
-            if (hasText(output.getText())) {
+            if (hasContent(output.getText())) {
                 text.append(output.getText());
             }
         }
@@ -1917,7 +1927,7 @@ public class LanguageModelImpl implements LanguageModel {
             }
             var output = result.getOutput();
             if (output != null) {
-                if (hasText(output.getText())) {
+                if (hasContent(output.getText())) {
                     text.append(output.getText());
                 }
                 if (output.getMetadata() != null) {

@@ -140,6 +140,30 @@ class OpenAiCompatibleModelsTest {
     }
 
     @Test
+    void chatResponseChunk_preservesWhitespaceOnlyContentDelta() {
+        var model = new OpenAiCompatibleChatModel(chatOptions(), WebClient.builder());
+        var json = """
+            {
+              "id": "chatcmpl-test",
+              "model": "gpt-test",
+              "choices": [{
+                "index": 0,
+                "delta": {
+                  "role": "assistant",
+                  "content": "\\n\\n"
+                }
+              }]
+            }
+            """;
+
+        var response = (ChatResponse) ReflectionTestUtils.invokeMethod(model,
+            "chatResponseChunk", json, null, chatOptions());
+
+        assertThat(response).isNotNull();
+        assertThat(response.getResult().getOutput().getText()).isEqualTo("\n\n");
+    }
+
+    @Test
     void chatUrl_usesConfiguredEndpointPath() {
         var model = new OpenAiCompatibleChatModel(chatOptions().mutate()
             .endpointPath("compatible/chat")
