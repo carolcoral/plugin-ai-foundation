@@ -101,7 +101,7 @@ public final class LanguageModelResponseMapper {
     public List<GenerationContentPart> contentParts(String text, List<ReasoningPart> reasoning) {
         var content = new ArrayList<GenerationContentPart>();
         nullSafe(reasoning).stream().map(GenerationContentPart::reasoning).forEach(content::add);
-        if (hasText(text)) {
+        if (hasContent(text)) {
             content.add(GenerationContentPart.text(text));
         }
         return content;
@@ -361,6 +361,10 @@ public final class LanguageModelResponseMapper {
 
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
+    }
+
+    private boolean hasContent(String value) {
+        return value != null && !value.isEmpty();
     }
 
     private <T> List<T> nullSafe(List<T> list) {

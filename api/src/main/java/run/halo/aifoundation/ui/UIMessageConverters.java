@@ -193,7 +193,7 @@ public final class UIMessageConverters {
                 return List.of();
             }
             if (part instanceof TextPart text) {
-                return hasText(text.text())
+                return hasContent(text.text())
                     ? List.of(ModelMessagePart.text(text.text()))
                     : List.of();
             }
@@ -283,7 +283,7 @@ public final class UIMessageConverters {
             UIMessageConversionContext<M> context) {
             return switch (options.reasoningConversion()) {
                 case DROP -> List.of();
-                case INCLUDE_TEXT_AS_CONTEXT -> hasText(part.text())
+                case INCLUDE_TEXT_AS_CONTEXT -> hasContent(part.text())
                     ? List.of(ModelMessagePart.text(part.text()))
                     : emptyReasoning(context);
                 case AUTO, PRESERVE_PROVIDER_STATE -> {
@@ -508,6 +508,10 @@ public final class UIMessageConverters {
 
     private static boolean hasText(String value) {
         return value != null && !value.isBlank();
+    }
+
+    private static boolean hasContent(String value) {
+        return value != null && !value.isEmpty();
     }
 
     private static boolean hasFileData(Object data) {

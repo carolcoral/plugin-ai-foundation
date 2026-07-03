@@ -1398,6 +1398,38 @@ class LanguageModelImplTest {
     }
 
     @Test
+    void streamText_preservesWhitespaceOnlyTextDeltas() {
+        var chatModel = mock(ChatModel.class);
+        when(chatModel.stream(any(Prompt.class))).thenReturn(Flux.just(
+            chatResponse("Hello", null, null, null),
+            chatResponse("\n\n", null, null, null),
+            chatResponse("World", "stop", 2, 4)
+        ));
+        var model = new LanguageModelImpl(chatModel, "openai");
+
+        var result = model.streamText(GenerateTextRequest.builder().prompt("Hi").build());
+
+        StepVerifier.create(result.textStream())
+            .expectNext("Hello", "\n\n", "World")
+            .verifyComplete();
+        StepVerifier.create(result.fullStream()
+                .filter(part -> PartType.TEXT_DELTA.equals(part.getType()))
+                .map(TextStreamPart::getDelta)
+                .collectList())
+            .assertNext(deltas -> assertThat(deltas).containsExactly("Hello", "\n\n", "World"))
+            .verifyComplete();
+        StepVerifier.create(result.result())
+            .assertNext(finalResult -> {
+                assertThat(finalResult.getText()).isEqualTo("Hello\n\nWorld");
+                assertThat(finalResult.getResponseMessages())
+                    .singleElement()
+                    .satisfies(message -> assertThat(message.getContent().getFirst().getText())
+                        .isEqualTo("Hello\n\nWorld"));
+            })
+            .verifyComplete();
+    }
+
+    @Test
     void streamText_ignoresNullAssistantMetadataValues() {
         var chatModel = mock(ChatModel.class);
         var properties = new LinkedHashMap<String, Object>();

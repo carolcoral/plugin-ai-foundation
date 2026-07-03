@@ -355,7 +355,7 @@ public class OpenAiCompatibleChatModel implements ChatModel {
 
     private List<Map<String, Object>> contentParts(String text, List<Media> mediaItems) {
         var parts = new ArrayList<Map<String, Object>>();
-        if (hasText(text)) {
+        if (hasContent(text)) {
             parts.add(Map.of(Fields.TYPE, Values.TEXT, Fields.TEXT, text));
         }
         for (var media : mediaItems) {
@@ -579,9 +579,9 @@ public class OpenAiCompatibleChatModel implements ChatModel {
     }
 
     private boolean isEmptyDelta(JsonNode choice, JsonNode delta) {
-        return !hasText(textOrNull(delta.path(Fields.CONTENT)))
-            && !hasText(textOrNull(delta.path(Fields.REASONING_CONTENT)))
-            && !hasText(textOrNull(delta.path(Fields.REASONING)))
+        return !hasContent(textOrNull(delta.path(Fields.CONTENT)))
+            && !hasContent(textOrNull(delta.path(Fields.REASONING_CONTENT)))
+            && !hasContent(textOrNull(delta.path(Fields.REASONING)))
             && !hasText(textOrNull(delta.path(Fields.AUDIO).path(Fields.DATA)))
             && !delta.has(Fields.TOOL_CALLS)
             && !hasText(textOrNull(choice.path(Fields.FINISH_REASON)));
@@ -591,7 +591,7 @@ public class OpenAiCompatibleChatModel implements ChatModel {
         ToolCallState toolCallState, OpenAiCompatibleChatOptions options) {
         var content = textOrEmpty(message.path(Fields.CONTENT));
         var audio = message.path(Fields.AUDIO);
-        if (!hasText(content)) {
+        if (!hasContent(content)) {
             content = textOrEmpty(audio.path(Fields.TRANSCRIPT));
         }
         var reasoning = firstText(message, Fields.REASONING_CONTENT, Fields.REASONING);
@@ -761,7 +761,7 @@ public class OpenAiCompatibleChatModel implements ChatModel {
     private String firstText(JsonNode node, String... names) {
         for (var name : names) {
             var text = textOrNull(node.path(name));
-            if (hasText(text)) {
+            if (hasContent(text)) {
                 return text;
             }
         }
@@ -788,6 +788,10 @@ public class OpenAiCompatibleChatModel implements ChatModel {
 
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
+    }
+
+    private boolean hasContent(String value) {
+        return value != null && !value.isEmpty();
     }
 
     private String lower(String value) {

@@ -64,7 +64,7 @@ public final class LanguageModelMessageMapper {
         List<ToolCall> toolCalls, List<ToolApprovalRequest> approvals) {
         var parts = new ArrayList<ModelMessagePart>();
         nullSafe(reasoning).stream().map(ModelMessagePart::reasoning).forEach(parts::add);
-        if (hasText(text)) {
+        if (hasContent(text)) {
             parts.add(ModelMessagePart.text(text));
         }
         nullSafe(toolCalls).stream().map(ModelMessagePart::toolCall).forEach(parts::add);
@@ -179,9 +179,9 @@ public final class LanguageModelMessageMapper {
             .filter(part -> PartType.isReasoning(part.getType()))
             .map(part -> {
                 var metadataReasoning = reasoningContent(part.getProviderOptions());
-                return hasText(metadataReasoning) ? metadataReasoning : part.getText();
+                return hasContent(metadataReasoning) ? metadataReasoning : part.getText();
             })
-            .filter(LanguageModelMessageMapper::hasText)
+            .filter(LanguageModelMessageMapper::hasContent)
             .collect(Collectors.joining());
     }
 
@@ -214,7 +214,7 @@ public final class LanguageModelMessageMapper {
         }
         for (var key : keys) {
             var value = source.get(key);
-            if (value instanceof String text && hasText(text)) {
+            if (value instanceof String text && hasContent(text)) {
                 return text;
             }
         }
@@ -223,6 +223,10 @@ public final class LanguageModelMessageMapper {
 
     private static boolean hasText(String value) {
         return value != null && !value.isBlank();
+    }
+
+    private static boolean hasContent(String value) {
+        return value != null && !value.isEmpty();
     }
 
     private static <T> List<T> nullSafe(List<T> list) {

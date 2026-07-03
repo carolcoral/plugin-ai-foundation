@@ -53,7 +53,7 @@ public final class ReasoningContentExtractor {
             matcher.appendReplacement(cleaned, "");
         }
         matcher.appendTail(cleaned);
-        return new TaggedReasoning(cleaned.toString().trim(), String.join("", reasoning));
+        return new TaggedReasoning(cleaned.toString(), String.join("", reasoning));
     }
 
     @SuppressWarnings("unchecked")

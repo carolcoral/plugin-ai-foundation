@@ -243,7 +243,7 @@ public final class LanguageModelStreamResultBuilder {
     private String text(List<GenerationStep> generationSteps) {
         return generationSteps.stream()
             .map(GenerationStep::getText)
-            .filter(LanguageModelStreamResultBuilder::hasText)
+            .filter(LanguageModelStreamResultBuilder::hasContent)
             .collect(Collectors.joining());
     }
 
@@ -290,6 +290,10 @@ public final class LanguageModelStreamResultBuilder {
         return value != null && !value.isBlank();
     }
 
+    private static boolean hasContent(String value) {
+        return value != null && !value.isEmpty();
+    }
+
     private static final class StepBuild {
         private final StringBuilder text = new StringBuilder();
         private final ArrayList<ReasoningPart> reasoning = new ArrayList<>();
@@ -309,7 +313,7 @@ public final class LanguageModelStreamResultBuilder {
         GenerationStep build(Integer stepIndex, StructuredOutput structuredOutput, boolean finalStep) {
             var content = new ArrayList<GenerationContentPart>();
             reasoning.stream().map(GenerationContentPart::reasoning).forEach(content::add);
-            if (hasText(text.toString())) {
+            if (hasContent(text.toString())) {
                 content.add(GenerationContentPart.text(text.toString()));
             }
             content.addAll(this.content);
