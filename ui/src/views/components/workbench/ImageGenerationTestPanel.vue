@@ -88,7 +88,7 @@ async function handleFileChange(e: Event, target: 'input' | 'mask') {
 
 <template>
   <div
-    class=":uno: min-h-0 flex-1 overflow-y-auto bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.10),transparent_28%),linear-gradient(180deg,#f8fafc_0%,#f1f5f9_100%)] px-4 py-5"
+    class=":uno: min-h-0 flex-1 overflow-y-auto bg-[#f8fafc] px-4 py-5"
   >
     <div class=":uno: mx-auto max-w-5xl space-y-3">
       <div class=":uno: grid gap-3 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
@@ -98,7 +98,7 @@ async function handleFileChange(e: Event, target: 'input' | 'mask') {
             :value="prompt"
             rows="8"
             placeholder="描述需要生成的图片..."
-            class=":uno: mt-2 w-full resize-none text-sm text-slate-900 leading-relaxed outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-3 !py-2 placeholder:text-slate-400 focus:!border-sky-400 focus:!ring-3 focus:!ring-sky-500/10"
+            class=":uno: mt-2 w-full resize-none text-sm text-slate-900 leading-relaxed outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-3 !py-2 placeholder:text-slate-400 focus:!border-teal-400 focus:!ring-3 focus:!ring-teal-500/10"
             :disabled="disabled || isLoading"
             @input="$emit('update:prompt', ($event.target as HTMLTextAreaElement).value)"
           />
@@ -134,7 +134,7 @@ async function handleFileChange(e: Event, target: 'input' | 'mask') {
             <input
               :value="inputUrl"
               placeholder="https://..."
-              class=":uno: mt-2 w-full text-xs text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-3 !py-2 focus:!border-sky-400 focus:!ring-3 focus:!ring-sky-500/10"
+              class=":uno: mt-2 w-full text-xs text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-3 !py-2 focus:!border-teal-400 focus:!ring-3 focus:!ring-teal-500/10"
               :disabled="disabled || isLoading"
               @input="$emit('update:inputUrl', ($event.target as HTMLInputElement).value)"
             />
@@ -143,13 +143,13 @@ async function handleFileChange(e: Event, target: 'input' | 'mask') {
                 :value="inputData"
                 rows="3"
                 placeholder="base64"
-                class=":uno: w-full resize-none text-xs text-slate-700 font-mono outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-3 !py-2 focus:!border-sky-400 focus:!ring-3 focus:!ring-sky-500/10"
+                class=":uno: w-full resize-none text-xs text-slate-700 font-mono outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-3 !py-2 focus:!border-teal-400 focus:!ring-3 focus:!ring-teal-500/10"
                 :disabled="disabled || isLoading"
                 @input="$emit('update:inputData', ($event.target as HTMLTextAreaElement).value)"
               />
               <input
                 :value="inputMediaType"
-                class=":uno: h-9 w-full text-xs text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1 focus:!border-sky-400 focus:!ring-3 focus:!ring-sky-500/10"
+                class=":uno: h-9 w-full text-xs text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1 focus:!border-teal-400 focus:!ring-3 focus:!ring-teal-500/10"
                 :disabled="disabled || isLoading"
                 @input="$emit('update:inputMediaType', ($event.target as HTMLInputElement).value)"
               />
@@ -174,7 +174,7 @@ async function handleFileChange(e: Event, target: 'input' | 'mask') {
             <input
               :value="maskUrl"
               placeholder="https://..."
-              class=":uno: mt-2 w-full text-xs text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-3 !py-2 focus:!border-sky-400 focus:!ring-3 focus:!ring-sky-500/10"
+              class=":uno: mt-2 w-full text-xs text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-3 !py-2 focus:!border-teal-400 focus:!ring-3 focus:!ring-teal-500/10"
               :disabled="disabled || isLoading"
               @input="$emit('update:maskUrl', ($event.target as HTMLInputElement).value)"
             />
@@ -183,13 +183,13 @@ async function handleFileChange(e: Event, target: 'input' | 'mask') {
                 :value="maskData"
                 rows="3"
                 placeholder="base64"
-                class=":uno: w-full resize-none text-xs text-slate-700 font-mono outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-3 !py-2 focus:!border-sky-400 focus:!ring-3 focus:!ring-sky-500/10"
+                class=":uno: w-full resize-none text-xs text-slate-700 font-mono outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-3 !py-2 focus:!border-teal-400 focus:!ring-3 focus:!ring-teal-500/10"
                 :disabled="disabled || isLoading"
                 @input="$emit('update:maskData', ($event.target as HTMLTextAreaElement).value)"
               />
               <input
                 :value="maskMediaType"
-                class=":uno: h-9 w-full text-xs text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1 focus:!border-sky-400 focus:!ring-3 focus:!ring-sky-500/10"
+                class=":uno: h-9 w-full text-xs text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1 focus:!border-teal-400 focus:!ring-3 focus:!ring-teal-500/10"
                 :disabled="disabled || isLoading"
                 @input="$emit('update:maskMediaType', ($event.target as HTMLInputElement).value)"
               />
@@ -210,9 +210,9 @@ async function handleFileChange(e: Event, target: 'input' | 'mask') {
         class=":uno: border border-slate-200 rounded-lg border-dashed bg-white text-center shadow-sm !px-6 !py-12"
       >
         <div
-          class=":uno: mx-auto mb-3 size-12 flex items-center justify-center border border-slate-200 rounded-lg bg-sky-50"
+          class=":uno: mx-auto mb-3 size-12 flex items-center justify-center border border-slate-200 rounded-lg bg-slate-50"
         >
-          <RiImageAddLine class=":uno: size-5 text-sky-600" />
+          <RiImageAddLine class=":uno: size-5 text-slate-500" />
         </div>
         <div class=":uno: text-sm text-slate-900 font-semibold">暂无图片生成结果</div>
         <div class=":uno: mt-1 text-xs text-slate-500">填写 Prompt 后点击生成图片</div>
@@ -252,12 +252,12 @@ async function handleFileChange(e: Event, target: 'input' | 'mask') {
 
         <div
           v-if="result.warnings?.length"
-          class=":uno: mt-3 border border-amber-200 rounded-lg bg-amber-50 !px-3 !py-2"
+          class=":uno: mt-3 border border-slate-200 rounded-lg bg-slate-50 !px-3 !py-2"
         >
-          <div class=":uno: text-xs text-amber-800 font-medium">Warnings</div>
-          <ul class=":uno: mt-1 text-xs text-amber-700 space-y-0.5">
+          <div class=":uno: text-xs text-slate-700 font-medium">Warnings</div>
+          <ul class=":uno: mt-1 text-xs text-slate-600 space-y-0.5">
             <li v-for="warning in result.warnings" :key="`${warning.code}-${warning.message}`">
-              <span class=":uno: font-mono">{{ warning.code }}</span>
+              <span class=":uno: text-slate-500">{{ warning.code }}</span>
               <span v-if="warning.message">: {{ warning.message }}</span>
             </li>
           </ul>

@@ -188,7 +188,7 @@ function updateNumberField(key: NumberFieldKey, value: string) {
     <div class=":uno: border-b border-slate-200 bg-slate-50/70 px-4 py-3">
       <div class=":uno: flex items-center gap-2">
         <span
-          class=":uno: h-7 w-7 flex items-center justify-center rounded-lg bg-white text-slate-600 shadow-sm ring-1 ring-slate-200"
+          class=":uno: h-7 w-7 flex items-center justify-center rounded-lg text-slate-600"
         >
           <RiSettings3Line class=":uno: size-4" />
         </span>
@@ -230,7 +230,7 @@ function updateNumberField(key: NumberFieldKey, value: string) {
               <div class=":uno: flex items-center justify-between">
                 <label class=":uno: text-xs text-slate-600 font-medium">Temperature</label>
                 <span
-                  class=":uno: border border-slate-200 rounded-md bg-white text-xs text-slate-700 font-mono !px-1.5 !py-0.5"
+                  class=":uno: border border-slate-200 rounded-md bg-white text-xs text-slate-700 !px-1.5 !py-0.5"
                 >
                   {{ temperature }}
                 </span>
@@ -255,7 +255,7 @@ function updateNumberField(key: NumberFieldKey, value: string) {
               <div class=":uno: flex items-center justify-between">
                 <label class=":uno: text-xs text-slate-600 font-medium">Top P</label>
                 <span
-                  class=":uno: border border-slate-200 rounded-md bg-white text-xs text-slate-700 font-mono !px-1.5 !py-0.5"
+                  class=":uno: border border-slate-200 rounded-md bg-white text-xs text-slate-700 !px-1.5 !py-0.5"
                 >
                   {{ topP }}
                 </span>
@@ -279,7 +279,7 @@ function updateNumberField(key: NumberFieldKey, value: string) {
                   :value="maxTokens"
                   min="1"
                   step="1"
-                  class=":uno: w-20 text-right text-slate-700 font-mono outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 placeholder:!text-xs focus:!ring-3 focus:!ring-teal-500/10"
+                  class=":uno: w-20 text-right text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 placeholder:!text-xs focus:!ring-3 focus:!ring-teal-500/10"
                   @input="updateNumberField('maxTokens', ($event.target as HTMLInputElement).value)"
                 />
               </div>
@@ -293,7 +293,7 @@ function updateNumberField(key: NumberFieldKey, value: string) {
                   :value="seed"
                   step="1"
                   placeholder="随机"
-                  class=":uno: w-full text-slate-700 font-mono outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 placeholder:!text-xs focus:!ring-3 focus:!ring-teal-500/10"
+                  class=":uno: w-full text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 placeholder:!text-xs focus:!ring-3 focus:!ring-teal-500/10"
                   @input="updateNumberField('seed', ($event.target as HTMLInputElement).value)"
                 />
               </div>
@@ -304,7 +304,7 @@ function updateNumberField(key: NumberFieldKey, value: string) {
                   :value="maxRetries"
                   min="0"
                   step="1"
-                  class=":uno: w-full text-slate-700 font-mono outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 placeholder:!text-xs focus:!ring-3 focus:!ring-teal-500/10"
+                  class=":uno: w-full text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 placeholder:!text-xs focus:!ring-3 focus:!ring-teal-500/10"
                   @input="
                     updateNumberField('maxRetries', ($event.target as HTMLInputElement).value)
                   "
@@ -572,7 +572,7 @@ function updateNumberField(key: NumberFieldKey, value: string) {
                   min="1"
                   step="1"
                   placeholder="默认"
-                  class=":uno: w-full text-slate-700 font-mono outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 placeholder:!text-xs focus:!ring-3 focus:!ring-teal-500/10"
+                  class=":uno: w-full text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 placeholder:!text-xs focus:!ring-3 focus:!ring-teal-500/10"
                   @input="
                     updateNumberField(
                       'embeddingDimensions',
@@ -588,7 +588,7 @@ function updateNumberField(key: NumberFieldKey, value: string) {
                   :value="embeddingMaxBatchSize"
                   min="1"
                   step="1"
-                  class=":uno: w-full text-slate-700 font-mono outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 placeholder:!text-xs focus:!ring-3 focus:!ring-teal-500/10"
+                  class=":uno: w-full text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 placeholder:!text-xs focus:!ring-3 focus:!ring-teal-500/10"
                   @input="
                     updateNumberField(
                       'embeddingMaxBatchSize',
@@ -607,7 +607,7 @@ function updateNumberField(key: NumberFieldKey, value: string) {
                   :value="embeddingMaxParallelCalls"
                   min="1"
                   step="1"
-                  class=":uno: w-full text-slate-700 font-mono outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 placeholder:!text-xs focus:!ring-3 focus:!ring-teal-500/10"
+                  class=":uno: w-full text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 placeholder:!text-xs focus:!ring-3 focus:!ring-teal-500/10"
                   @input="
                     updateNumberField(
                       'embeddingMaxParallelCalls',
@@ -623,7 +623,7 @@ function updateNumberField(key: NumberFieldKey, value: string) {
                   :value="embeddingMaxRetries"
                   min="0"
                   step="1"
-                  class=":uno: w-full text-slate-700 font-mono outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 placeholder:!text-xs focus:!ring-3 focus:!ring-teal-500/10"
+                  class=":uno: w-full text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 placeholder:!text-xs focus:!ring-3 focus:!ring-teal-500/10"
                   @input="
                     updateNumberField(
                       'embeddingMaxRetries',
@@ -685,7 +685,7 @@ function updateNumberField(key: NumberFieldKey, value: string) {
                   :value="imageN"
                   min="1"
                   step="1"
-                  class=":uno: w-full text-slate-700 font-mono outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 focus:!ring-3 focus:!ring-teal-500/10"
+                  class=":uno: w-full text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 focus:!ring-3 focus:!ring-teal-500/10"
                   @input="updateNumberField('imageN', ($event.target as HTMLInputElement).value)"
                 />
               </div>
@@ -717,7 +717,7 @@ function updateNumberField(key: NumberFieldKey, value: string) {
                   min="1"
                   step="1"
                   placeholder="默认"
-                  class=":uno: w-full text-slate-700 font-mono outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 focus:!ring-3 focus:!ring-teal-500/10"
+                  class=":uno: w-full text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 focus:!ring-3 focus:!ring-teal-500/10"
                   @input="
                     updateNumberField('imageWidth', ($event.target as HTMLInputElement).value)
                   "
@@ -731,7 +731,7 @@ function updateNumberField(key: NumberFieldKey, value: string) {
                   min="1"
                   step="1"
                   placeholder="默认"
-                  class=":uno: w-full text-slate-700 font-mono outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 focus:!ring-3 focus:!ring-teal-500/10"
+                  class=":uno: w-full text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 focus:!ring-3 focus:!ring-teal-500/10"
                   @input="
                     updateNumberField('imageHeight', ($event.target as HTMLInputElement).value)
                   "
@@ -744,7 +744,7 @@ function updateNumberField(key: NumberFieldKey, value: string) {
               <input
                 :value="imageAspectRatio"
                 placeholder="例如 16:9"
-                class=":uno: w-full text-slate-700 font-mono outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 focus:!ring-3 focus:!ring-teal-500/10"
+                class=":uno: w-full text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 focus:!ring-3 focus:!ring-teal-500/10"
                 @input="emit('update:imageAspectRatio', ($event.target as HTMLInputElement).value)"
               />
             </div>
@@ -757,7 +757,7 @@ function updateNumberField(key: NumberFieldKey, value: string) {
                   :value="imageSeed"
                   step="1"
                   placeholder="随机"
-                  class=":uno: w-full text-slate-700 font-mono outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 focus:!ring-3 focus:!ring-teal-500/10"
+                  class=":uno: w-full text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 focus:!ring-3 focus:!ring-teal-500/10"
                   @input="
                     updateNumberField('imageSeed', ($event.target as HTMLInputElement).value)
                   "
@@ -770,7 +770,7 @@ function updateNumberField(key: NumberFieldKey, value: string) {
                   :value="imageMaxRetries"
                   min="0"
                   step="1"
-                  class=":uno: w-full text-slate-700 font-mono outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 focus:!ring-3 focus:!ring-teal-500/10"
+                  class=":uno: w-full text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 focus:!ring-3 focus:!ring-teal-500/10"
                   @input="
                     updateNumberField('imageMaxRetries', ($event.target as HTMLInputElement).value)
                   "
@@ -783,7 +783,7 @@ function updateNumberField(key: NumberFieldKey, value: string) {
                   :value="imageMaxParallelCalls"
                   min="1"
                   step="1"
-                  class=":uno: w-full text-slate-700 font-mono outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 focus:!ring-3 focus:!ring-teal-500/10"
+                  class=":uno: w-full text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 focus:!ring-3 focus:!ring-teal-500/10"
                   @input="
                     updateNumberField(
                       'imageMaxParallelCalls',

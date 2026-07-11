@@ -21,7 +21,7 @@ defineProps<{
 
 <template>
   <div
-    class=":uno: min-h-0 flex-1 overflow-y-auto bg-[radial-gradient(circle_at_top_left,rgba(245,158,11,0.10),transparent_28%),linear-gradient(180deg,#f8fafc_0%,#f1f5f9_100%)] px-4 py-5"
+    class=":uno: min-h-0 flex-1 overflow-y-auto bg-[#f8fafc] px-4 py-5"
   >
     <div class=":uno: mx-auto max-w-4xl space-y-3">
       <div
@@ -49,10 +49,10 @@ defineProps<{
         class=":uno: border border-slate-200 rounded-lg border-dashed bg-white text-center shadow-sm !px-6 !py-12"
       >
         <div
-          class=":uno: mx-auto mb-3 size-12 flex items-center justify-center border border-slate-200 rounded-lg bg-amber-50"
+          class=":uno: mx-auto mb-3 size-12 flex items-center justify-center border border-slate-200 rounded-lg bg-slate-50"
         >
           <svg
-            class=":uno: size-5 text-amber-600"
+            class=":uno: size-5 text-slate-500"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -85,29 +85,13 @@ defineProps<{
         >
           <div class=":uno: flex items-center justify-between">
             <span class=":uno: text-slate-600">前两个输入的 cosine similarity</span>
-            <span
-              class=":uno: text-base font-bold font-mono"
-              :class="
-                result.firstPairSimilarity > 0.8
-                  ? ':uno: text-green-600'
-                  : result.firstPairSimilarity > 0.5
-                    ? ':uno: text-amber-600'
-                    : ':uno: text-rose-600'
-              "
-            >
+            <span class=":uno: text-base text-slate-700 font-bold">
               {{ result.firstPairSimilarity.toFixed(4) }}
             </span>
           </div>
           <div class=":uno: mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
             <div
-              class=":uno: h-full rounded-full transition-all"
-              :class="
-                result.firstPairSimilarity > 0.8
-                  ? ':uno: bg-green-500'
-                  : result.firstPairSimilarity > 0.5
-                    ? ':uno: bg-amber-500'
-                    : ':uno: bg-rose-500'
-              "
+              class=":uno: h-full rounded-full bg-teal-600 transition-all"
               :style="{ width: `${Math.min(result.firstPairSimilarity * 100, 100)}%` }"
             />
           </div>
@@ -120,11 +104,11 @@ defineProps<{
             class=":uno: border border-slate-100 rounded-lg bg-slate-50/70 transition-colors hover:bg-slate-50 !px-3 !py-2.5"
           >
             <div class=":uno: flex items-center justify-between">
-              <span class=":uno: text-xs text-slate-500 font-medium font-mono"
+              <span class=":uno: text-xs text-slate-500 font-medium"
                 >#{{ (item.index ?? 0) + 1 }}</span
               >
               <span
-                class=":uno: border border-slate-200 rounded-md bg-white text-xs text-slate-600 font-mono !px-1.5 !py-0.5"
+                class=":uno: border border-slate-200 rounded-md bg-white text-xs text-slate-600 !px-1.5 !py-0.5"
                 >{{ item.dimensions }} 维</span
               >
             </div>
@@ -138,9 +122,9 @@ defineProps<{
 
         <div
           v-if="result.warnings?.length"
-          class=":uno: mt-3 border border-amber-200 rounded-lg bg-amber-50 !px-3 !py-2"
+          class=":uno: mt-3 border border-slate-200 rounded-lg bg-slate-50 !px-3 !py-2"
         >
-          <div class=":uno: flex items-center gap-1.5 text-xs text-amber-800 font-medium">
+          <div class=":uno: flex items-center gap-1.5 text-xs text-slate-700 font-medium">
             <svg
               class=":uno: size-3.5"
               viewBox="0 0 24 24"
@@ -154,9 +138,9 @@ defineProps<{
             </svg>
             Warnings
           </div>
-          <ul class=":uno: mt-1 text-xs text-amber-700 space-y-0.5">
+          <ul class=":uno: mt-1 text-xs text-slate-600 space-y-0.5">
             <li v-for="warning in result.warnings" :key="`${warning.code}-${warning.message}`">
-              <span class=":uno: font-mono">{{ warning.code }}</span>
+              <span class=":uno: text-slate-500">{{ warning.code }}</span>
               <span v-if="warning.message">: {{ warning.message }}</span>
             </li>
           </ul>

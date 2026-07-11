@@ -286,7 +286,7 @@ function addSource(sources: TestRagSource[]) {
                 <span class=":uno: truncate text-xs text-slate-700 font-medium">
                   {{ source.title || source.id || `Source ${index + 1}` }}
                 </span>
-                <span v-if="source.score !== undefined" class=":uno: text-xs text-teal-700 font-mono">
+                <span v-if="source.score !== undefined" class=":uno: text-xs text-slate-700">
                   {{ Number(source.score).toFixed(4) }}
                 </span>
               </div>

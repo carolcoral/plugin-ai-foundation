@@ -27,7 +27,7 @@ const iconMap: Record<string, typeof RiQuillPenLine> = {
   <div class=":uno: min-h-full flex flex-col items-center justify-center px-4 py-8">
     <div class=":uno: mx-auto max-w-2xl w-full text-center">
       <div
-        class=":uno: mx-auto mb-4 size-12 flex items-center justify-center border border-slate-200 rounded-lg bg-white text-teal-600 shadow-sm"
+        class=":uno: mx-auto mb-4 size-12 flex items-center justify-center border border-slate-200 rounded-lg bg-slate-50 text-slate-600"
       >
         <svg
           class=":uno: size-5"
@@ -58,7 +58,7 @@ const iconMap: Record<string, typeof RiQuillPenLine> = {
         @click="emit('select', prompt)"
       >
         <span
-          class=":uno: mt-0.5 h-8 w-8 flex flex-none items-center justify-center rounded-md bg-slate-100 text-slate-500 transition-colors group-hover:bg-teal-50 group-hover:text-teal-600"
+          class=":uno: mt-0.5 h-8 w-8 flex flex-none items-center justify-center rounded-md bg-slate-100 text-slate-500"
         >
           <component :is="iconMap[prompt.icon]" class=":uno: size-4" />
         </span>

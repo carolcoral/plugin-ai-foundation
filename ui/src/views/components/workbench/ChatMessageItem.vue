@@ -170,7 +170,7 @@ function filePreviewUrl(file: WorkbenchFileReference) {
         </span>
         <VTag v-if="message.state === 'streaming'" size="sm">
           <span class=":uno: inline-flex items-center gap-1.5">
-            <span class=":uno: h-1 w-1 animate-pulse rounded-full bg-teal-500" />
+            <span class=":uno: h-1.5 w-1.5 rounded-full bg-teal-500" />
             生成中
           </span>
         </VTag>
@@ -200,7 +200,7 @@ function filePreviewUrl(file: WorkbenchFileReference) {
             <span
               class=":uno: h-3 w-3 transition-transform duration-200 group-open/reasoning:rotate-90"
               :class="{
-                ':uno: animate-pulse text-teal-600': message.reasoningState === 'streaming',
+                ':uno: text-teal-600': message.reasoningState === 'streaming',
               }"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -211,7 +211,7 @@ function filePreviewUrl(file: WorkbenchFileReference) {
               class=":uno: h-1.5 w-1.5 rounded-full transition-colors"
               :class="
                 message.reasoningState === 'streaming'
-                  ? ':uno: animate-pulse bg-teal-500'
+                  ? ':uno: bg-teal-500'
                   : ':uno: bg-slate-300'
               "
             />
@@ -232,22 +232,18 @@ function filePreviewUrl(file: WorkbenchFileReference) {
             :key="event.id"
             class=":uno: border rounded-md px-3 py-2 text-xs"
             :class="{
-              ':uno: border-slate-200 bg-slate-50 text-slate-700': event.type === 'tool-call',
-              ':uno: border-emerald-200 bg-emerald-50 text-emerald-700':
-                event.type === 'tool-result',
+              ':uno: border-slate-200 bg-slate-50 text-slate-700':
+                event.type === 'tool-call' || event.type === 'tool-result' || event.type === 'tool-approval-request',
               ':uno: border-rose-200 bg-rose-50 text-rose-700': event.type === 'tool-error',
-              ':uno: border-amber-200 bg-amber-50 text-amber-800':
-                event.type === 'tool-approval-request',
             }"
           >
             <div class=":uno: flex items-center gap-1.5 font-medium">
               <span
                 class=":uno: h-1.5 w-1.5 rounded-full"
                 :class="{
-                  ':uno: bg-slate-400': event.type === 'tool-call',
-                  ':uno: bg-emerald-500': event.type === 'tool-result',
+                  ':uno: bg-slate-400':
+                    event.type === 'tool-call' || event.type === 'tool-result' || event.type === 'tool-approval-request',
                   ':uno: bg-rose-500': event.type === 'tool-error',
-                  ':uno: bg-amber-500': event.type === 'tool-approval-request',
                 }"
               />
               {{
@@ -263,7 +259,7 @@ function filePreviewUrl(file: WorkbenchFileReference) {
                           ? '已拒绝'
                           : '等待审批'
               }}
-              <span v-if="event.toolName" class=":uno: font-mono opacity-70">
+              <span v-if="event.toolName" class=":uno: opacity-70">
                 {{ event.toolName }}
               </span>
             </div>
@@ -338,9 +334,9 @@ function filePreviewUrl(file: WorkbenchFileReference) {
 
         <div
           v-if="message.role === 'assistant' && message.warnings?.length"
-          class=":uno: mb-2.5 border border-amber-200 rounded-md bg-amber-50 px-3 py-2"
+          class=":uno: mb-2.5 border border-slate-200 rounded-md bg-slate-50 px-3 py-2"
         >
-          <div class=":uno: flex items-center gap-1.5 text-xs text-amber-800 font-medium">
+          <div class=":uno: flex items-center gap-1.5 text-xs text-slate-700 font-medium">
             <svg
               class=":uno: size-3.5"
               viewBox="0 0 24 24"
@@ -354,9 +350,9 @@ function filePreviewUrl(file: WorkbenchFileReference) {
             </svg>
             Warnings
           </div>
-          <ul class=":uno: mt-1 text-xs text-amber-700 space-y-0.5">
+          <ul class=":uno: mt-1 text-xs text-slate-600 space-y-0.5">
             <li v-for="warning in message.warnings" :key="`${warning.code}-${warning.message}`">
-              <span class=":uno: font-mono">{{ warning.code }}</span>
+              <span class=":uno: text-slate-500">{{ warning.code }}</span>
               <span v-if="warning.message">: {{ warning.message }}</span>
             </li>
           </ul>
@@ -399,8 +395,8 @@ function filePreviewUrl(file: WorkbenchFileReference) {
                 class=":uno: size-7 flex flex-none items-center justify-center rounded-md"
                 :class="
                   message.role === 'user'
-                    ? ':uno: bg-white/10 text-slate-100'
-                    : ':uno: bg-slate-100 text-slate-600'
+                    ? ':uno: text-slate-100'
+                    : ':uno: text-slate-600'
                 "
               >
                 <RiImageLine v-if="file.mediaType?.startsWith('image/')" class=":uno: size-3.5" />
@@ -457,7 +453,7 @@ function filePreviewUrl(file: WorkbenchFileReference) {
 
         <span
           v-if="message.role === 'assistant' && message.state === 'streaming'"
-          class=":uno: ml-0.5 inline-block h-4 w-0.5 animate-pulse bg-teal-500 align-middle"
+          class=":uno: ml-0.5 inline-block h-4 w-0.5 bg-teal-500 align-middle"
         />
       </div>
 

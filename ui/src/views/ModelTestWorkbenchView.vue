@@ -1540,7 +1540,7 @@ onBeforeUnmount(() => {
       class=":uno: grid grid-cols-1 h-full min-h-0 overflow-hidden border border-slate-200/80 rounded-lg bg-white lg:grid-cols-[minmax(0,1fr)_23rem]"
     >
       <section class=":uno: min-h-0 min-w-0 flex flex-col bg-[#f8fafc]">
-        <header class=":uno: border-b border-slate-200/80 bg-white/95 px-4 py-3 backdrop-blur">
+        <header class=":uno: border-b border-slate-200/80 bg-white px-4 py-3">
           <div class=":uno: flex flex-col gap-3 xl:flex-row xl:items-center">
             <div
               class=":uno: min-w-0 w-full flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center"
@@ -1594,7 +1594,7 @@ onBeforeUnmount(() => {
         <template v-if="testMode === 'chat'">
           <div
             ref="conversationRef"
-            class=":uno: min-h-0 flex-1 overflow-y-auto bg-[radial-gradient(circle_at_top_left,rgba(20,184,166,0.10),transparent_30%),linear-gradient(180deg,#f8fafc_0%,#f1f5f9_100%)] px-4 py-5"
+            class=":uno: min-h-0 flex-1 overflow-y-auto bg-[#f8fafc] px-4 py-5"
             @scroll.passive="handleConversationScroll"
           >
             <ExamplePrompts v-if="!messages.length" @select="handleExampleSelect" />
@@ -1649,7 +1649,7 @@ onBeforeUnmount(() => {
                   @keydown="handleEmbeddingKeydown"
                 />
                 <div
-                  class=":uno: pointer-events-none absolute bottom-3 right-14 text-[11px] text-slate-400 font-mono"
+                  class=":uno: pointer-events-none absolute bottom-3 right-14 text-[11px] text-slate-400"
                 >
                   {{ embeddingInputs.length }}
                 </div>
