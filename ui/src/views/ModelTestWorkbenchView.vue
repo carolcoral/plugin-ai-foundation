@@ -9,6 +9,8 @@ import {
   type TestRagSource,
   type TestRerankResponse,
 } from '@/api/generated'
+import type { Tab } from '@/components/SegmentedTabs.vue'
+import SegmentedTabs from '@/components/SegmentedTabs.vue'
 import { useModelOptionsFetch } from '@/composables/use-model-options-fetch'
 import AiModelSelector from '@/formkit/AiModelSelector.vue'
 import {
@@ -71,7 +73,16 @@ const {
 })
 
 const selectedModelName = useRouteQuery<string | undefined>('model')
-const testMode = shallowRef<'chat' | 'embedding' | 'rerank' | 'image' | 'rag'>('chat')
+type TestMode = 'chat' | 'embedding' | 'rerank' | 'image' | 'rag'
+
+const testModeTabs: Tab[] = [
+  { label: '对话', value: 'chat', icon: RiMessage3Line },
+  { label: '嵌入', value: 'embedding', icon: RiStackLine },
+  { label: 'Rerank', value: 'rerank', icon: RiStackLine },
+  { label: '图片', value: 'image', icon: RiImageLine },
+  { label: 'RAG', value: 'rag', icon: RiStackLine },
+]
+const testMode = shallowRef<TestMode>('chat')
 
 const messages = ref<WorkbenchMessage[]>([])
 const input = shallowRef('')
@@ -1534,80 +1545,14 @@ onBeforeUnmount(() => {
             <div
               class=":uno: min-w-0 w-full flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center"
             >
-              <div
-                class=":uno: h-9 inline-flex flex-none items-center border border-slate-200 rounded-lg bg-slate-100/80 !p-0.5"
-              >
-                <button
-                  type="button"
-                  class=":uno: h-7 inline-flex items-center gap-1.5 rounded-md text-xs font-medium transition-all !px-3"
-                  :class="
-                    testMode === 'chat'
-                      ? ':uno: bg-white text-slate-950 shadow-sm ring-1 ring-slate-200'
-                      : ':uno: text-slate-500 hover:text-slate-800'
-                  "
-                  :disabled="isAnyTesting"
-                  @click="testMode = 'chat'"
-                >
-                  <RiMessage3Line class=":uno: size-3.5" />
-                  对话
-                </button>
-                <button
-                  type="button"
-                  class=":uno: h-7 inline-flex items-center gap-1.5 rounded-md text-xs font-medium transition-all !px-3"
-                  :class="
-                    testMode === 'embedding'
-                      ? ':uno: bg-white text-slate-950 shadow-sm ring-1 ring-slate-200'
-                      : ':uno: text-slate-500 hover:text-slate-800'
-                  "
-                  :disabled="isAnyTesting"
-                  @click="testMode = 'embedding'"
-                >
-                  <RiStackLine class=":uno: size-3.5" />
-                  嵌入
-                </button>
-                <button
-                  type="button"
-                  class=":uno: h-7 inline-flex items-center gap-1.5 rounded-md text-xs font-medium transition-all !px-3"
-                  :class="
-                    testMode === 'rerank'
-                      ? ':uno: bg-white text-slate-950 shadow-sm ring-1 ring-slate-200'
-                      : ':uno: text-slate-500 hover:text-slate-800'
-                  "
-                  :disabled="isAnyTesting"
-                  @click="testMode = 'rerank'"
-                >
-                  <RiStackLine class=":uno: size-3.5" />
-                  Rerank
-                </button>
-                <button
-                  type="button"
-                  class=":uno: h-7 inline-flex items-center gap-1.5 rounded-md text-xs font-medium transition-all !px-3"
-                  :class="
-                    testMode === 'image'
-                      ? ':uno: bg-white text-slate-950 shadow-sm ring-1 ring-slate-200'
-                      : ':uno: text-slate-500 hover:text-slate-800'
-                  "
-                  :disabled="isAnyTesting"
-                  @click="testMode = 'image'"
-                >
-                  <RiImageLine class=":uno: size-3.5" />
-                  图片
-                </button>
-                <button
-                  type="button"
-                  class=":uno: h-7 inline-flex items-center gap-1.5 rounded-md text-xs font-medium transition-all !px-3"
-                  :class="
-                    testMode === 'rag'
-                      ? ':uno: bg-white text-slate-950 shadow-sm ring-1 ring-slate-200'
-                      : ':uno: text-slate-500 hover:text-slate-800'
-                  "
-                  :disabled="isAnyTesting"
-                  @click="testMode = 'rag'"
-                >
-                  <RiStackLine class=":uno: size-3.5" />
-                  RAG
-                </button>
-              </div>
+              <SegmentedTabs
+                :model-value="testMode"
+                :tabs="testModeTabs"
+                :disabled="isAnyTesting"
+                compact
+                aria-label="模型测试模式"
+                @update:model-value="testMode = $event as TestMode"
+              />
 
               <AiModelSelector
                 v-model="selectedModelName"

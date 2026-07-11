@@ -56,7 +56,11 @@ const activeRouteName = computed({
   </VPageHeader>
 
   <div class=":uno: flex p-2 pb-0">
-    <SegmentedTabs v-model="activeRouteName" :tabs="tabs" />
+    <SegmentedTabs
+      v-model="activeRouteName"
+      :tabs="tabs"
+      aria-label="AI Foundation 页面导航"
+    />
   </div>
 
   <RouterView />
