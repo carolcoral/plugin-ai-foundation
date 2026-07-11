@@ -24,7 +24,7 @@ const iconMap: Record<string, typeof RiQuillPenLine> = {
 </script>
 
 <template>
-  <div class=":uno: h-full flex flex-col items-center justify-center px-4 py-8">
+  <div class=":uno: min-h-full flex flex-col items-center justify-center px-4 py-8">
     <div class=":uno: mx-auto max-w-2xl w-full text-center">
       <div
         class=":uno: mx-auto mb-4 size-12 flex items-center justify-center border border-slate-200 rounded-lg bg-white text-teal-600 shadow-sm"
@@ -48,7 +48,7 @@ const iconMap: Record<string, typeof RiQuillPenLine> = {
     </div>
 
     <div
-      class=":uno: grid grid-cols-1 mx-auto mt-6 max-w-3xl w-full gap-2.5 lg:grid-cols-3 sm:grid-cols-2"
+      class=":uno: example-prompts-grid grid mx-auto mt-6 max-w-3xl w-full gap-2.5"
     >
       <button
         v-for="prompt in EXAMPLE_PROMPTS"
@@ -76,3 +76,9 @@ const iconMap: Record<string, typeof RiQuillPenLine> = {
     </div>
   </div>
 </template>
+
+<style scoped>
+.example-prompts-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+}
+</style>
