@@ -1531,7 +1531,9 @@ onBeforeUnmount(() => {
       <section class=":uno: min-h-0 min-w-0 flex flex-col bg-[#f8fafc]">
         <header class=":uno: border-b border-slate-200/80 bg-white/95 px-4 py-3 backdrop-blur">
           <div class=":uno: flex flex-col gap-3 xl:flex-row xl:items-center">
-            <div class=":uno: min-w-0 w-full flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div
+              class=":uno: min-w-0 w-full flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center"
+            >
               <div
                 class=":uno: h-9 inline-flex flex-none items-center border border-slate-200 rounded-lg bg-slate-100/80 !p-0.5"
               >
@@ -1616,7 +1618,7 @@ onBeforeUnmount(() => {
                 placeholder="选择测试模型"
                 search-placeholder="搜索模型..."
                 full-width
-                class=":uno: min-w-0 flex-1 !py-0"
+                class=":uno: min-w-[13rem] flex-1 !py-0"
               />
 
               <div class=":uno: flex flex-none items-center gap-1">
