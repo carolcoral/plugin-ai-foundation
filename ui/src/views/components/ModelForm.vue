@@ -27,8 +27,8 @@ import {
 } from '@/utils/model'
 import type { FormKitTypeDefinition } from '@formkit/core'
 import { submitForm } from '@formkit/core'
-import { IconArrowRight } from '@halo-dev/components'
 import { computed, ref, watch } from 'vue'
+import AdvancedSettingsCollapsible from './AdvancedSettingsCollapsible.vue'
 
 const props = defineProps<{
   formState?: ModelFormState
@@ -81,8 +81,6 @@ const inputSourceOptions = [
   { label: 'URL', value: LanguageCapabilityInputSourcesEnum.Url },
 ]
 
-const languageAdvancedOpen = ref(false)
-const imageGenerationAdvancedOpen = ref(false)
 const selectedFeatures = ref<string[]>(
   props.formState?.features ? [...props.formState.features] : [],
 )
@@ -428,26 +426,7 @@ function sameJson(a: unknown, b: unknown) {
           :value="selectedFeatures"
           @input="onFeaturesInput"
         />
-        <div class=":uno: mt-4">
-          <button
-            type="button"
-            :aria-expanded="languageAdvancedOpen"
-            class=":uno: min-h-10 w-full flex items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100"
-            @click="languageAdvancedOpen = !languageAdvancedOpen"
-          >
-            <span class=":uno: flex items-center gap-2 font-medium">
-              <IconArrowRight
-                class=":uno: h-4 w-4 text-gray-500 transition-transform"
-                :style="{ transform: languageAdvancedOpen ? 'rotate(90deg)' : undefined }"
-              />
-              高级设置
-            </span>
-            <span class=":uno: text-xs text-gray-500">来源：{{ languageSourceLabel }}</span>
-          </button>
-          <div
-            v-show="languageAdvancedOpen"
-            class=":uno: mt-4 border-l border-gray-100 pl-3 space-y-4"
-          >
+        <AdvancedSettingsCollapsible :source-label="languageSourceLabel">
             <div class=":uno: space-y-3">
               <FormKit
                 type="select"
@@ -477,8 +456,7 @@ function sameJson(a: unknown, b: unknown) {
               help="每行或用逗号填写一个 MIME 类型，例如 image/*、audio/*、application/pdf。"
               :value="listFormValue(formState?.capabilities?.language?.inputMediaTypes)"
             />
-          </div>
-        </div>
+        </AdvancedSettingsCollapsible>
       </template>
 
       <template v-if="isImageGenerationCapabilityVisible">
@@ -498,26 +476,7 @@ function sameJson(a: unknown, b: unknown) {
             :value="booleanFormValue(formState?.capabilities?.imageGeneration?.imageToImage)"
           />
         </div>
-        <div class=":uno: mt-4">
-          <button
-            type="button"
-            :aria-expanded="imageGenerationAdvancedOpen"
-            class=":uno: min-h-10 w-full flex items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100"
-            @click="imageGenerationAdvancedOpen = !imageGenerationAdvancedOpen"
-          >
-            <span class=":uno: flex items-center gap-2 font-medium">
-              <IconArrowRight
-                class=":uno: h-4 w-4 text-gray-500 transition-transform"
-                :style="{ transform: imageGenerationAdvancedOpen ? 'rotate(90deg)' : undefined }"
-              />
-              高级设置
-            </span>
-            <span class=":uno: text-xs text-gray-500">来源：{{ imageGenerationSourceLabel }}</span>
-          </button>
-          <div
-            v-show="imageGenerationAdvancedOpen"
-            class=":uno: mt-4 border-l border-gray-100 pl-3 space-y-4"
-          >
+        <AdvancedSettingsCollapsible :source-label="imageGenerationSourceLabel">
             <FormKit
               type="select"
               name="imageGenerationMaskInput"
@@ -553,8 +512,7 @@ function sameJson(a: unknown, b: unknown) {
               placeholder="image/png"
               :value="listFormValue(formState?.capabilities?.imageGeneration?.outputMediaTypes)"
             />
-          </div>
-        </div>
+        </AdvancedSettingsCollapsible>
       </template>
     </div>
   </FormKit>
