@@ -72,7 +72,8 @@ export function useWorkbenchModels(): WorkbenchModels {
   watch(
     modelOptions,
     (items) => {
-      const selected = (items || []).find((item) => item.name === selectedModelName.value)
+      if (!items) return
+      const selected = items.find((item) => item.name === selectedModelName.value)
       switch (selected?.modelType) {
         case ModelOptionModelTypeEnum.Embedding:
           testMode.value = 'embedding'
