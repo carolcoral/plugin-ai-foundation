@@ -247,7 +247,7 @@ function distanceToConversationBottom(element: HTMLElement) {
           >
             <ExamplePrompts v-if="!messages.length" @select="handleExampleSelect" />
 
-            <div v-else class=":uno: mx-auto max-w-4xl space-y-5">
+            <div v-else class=":uno: mx-auto max-w-5xl space-y-5">
               <ChatMessageItem
                 v-for="(message, index) in messages"
                 :key="message.id"
@@ -296,20 +296,23 @@ function distanceToConversationBottom(element: HTMLElement) {
                   :disabled="!selectedModel || isEmbeddingTesting"
                   @keydown="handleEmbeddingKeydown"
                 />
-                <div
-                  class=":uno: pointer-events-none absolute bottom-3 right-14 text-[11px] text-slate-400"
-                >
-                  {{ embeddingInputs.length }}
+                <div class=":uno: absolute bottom-2 right-2 flex items-end gap-3">
+                  <div class=":uno: pointer-events-none text-[11px] text-slate-400">
+                    {{ embeddingInputs.length }}
+                  </div>
+                  <VButton
+                    type="primary"
+                    :loading="isEmbeddingTesting"
+                    :disabled="!embeddingInputs.trim() || !selectedModel"
+                    @click="runEmbeddingTest"
+                    size="sm"
+                  >
+                    <template #icon>
+                      <RiSendPlaneLine />
+                    </template>
+                    发送
+                  </VButton>
                 </div>
-                <VButton
-                  type="primary"
-                  class=":uno: absolute bottom-2 right-2 h-8 w-8 shadow-sm !rounded-md !p-0"
-                  :loading="isEmbeddingTesting"
-                  :disabled="!embeddingInputs.trim() || !selectedModel"
-                  @click="runEmbeddingTest"
-                >
-                  <RiSendPlaneLine class=":uno: size-4" />
-                </VButton>
               </div>
             </div>
           </div>
