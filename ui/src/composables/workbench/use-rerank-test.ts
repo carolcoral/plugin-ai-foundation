@@ -1,6 +1,6 @@
 import { aiConsoleApiClient } from '@/api'
 import type { ModelOption, TestRerankResponse } from '@/api/generated'
-import { parseProviderOptionsJson } from '@/utils/model-test-workbench'
+import { numberOrUndefined } from '@/utils/model-test-workbench-request'
 import { shallowRef, type ComputedRef } from 'vue'
 
 export function useRerankTest(selectedModel: ComputedRef<ModelOption | undefined>) {
@@ -8,8 +8,7 @@ export function useRerankTest(selectedModel: ComputedRef<ModelOption | undefined
   const rerankDocuments = shallowRef(
     'AI Foundation 提供统一的语言模型、嵌入和 UI Message 能力\nHalo 是一个开源建站工具\nRAG 通常需要检索、上下文注入和来源展示',
   )
-  const rerankProviderOptionsText = shallowRef('{}')
-  const rerankProviderOptionsError = shallowRef('')
+  const rerankTopN = shallowRef<number | undefined>()
   const rerankResult = shallowRef<TestRerankResponse | undefined>()
   const rerankError = shallowRef('')
   const isRerankTesting = shallowRef(false)
@@ -30,10 +29,6 @@ export function useRerankTest(selectedModel: ComputedRef<ModelOption | undefined
       rerankError.value = '请至少输入一个候选文档'
       return
     }
-    const providerOptions = parseProviderOptionsJson(rerankProviderOptionsText.value)
-    rerankProviderOptionsError.value = providerOptions.error || ''
-    if (providerOptions.error) return
-
     rerankError.value = ''
     rerankResult.value = undefined
     isRerankTesting.value = true
@@ -43,9 +38,7 @@ export function useRerankTest(selectedModel: ComputedRef<ModelOption | undefined
         testRerankRequest: {
           query: rerankQuery.value,
           documents,
-          providerOptions: providerOptions.value as
-            | { [key: string]: { [key: string]: object } }
-            | undefined,
+          topN: numberOrUndefined(rerankTopN.value),
         },
       })
       rerankResult.value = data
@@ -59,8 +52,7 @@ export function useRerankTest(selectedModel: ComputedRef<ModelOption | undefined
   return {
     rerankQuery,
     rerankDocuments,
-    rerankProviderOptionsText,
-    rerankProviderOptionsError,
+    rerankTopN,
     rerankResult,
     rerankError,
     isRerankTesting,

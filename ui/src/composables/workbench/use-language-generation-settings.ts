@@ -1,7 +1,6 @@
 import {
   buildOutputSpec,
   buildReasoningOptions,
-  parseProviderOptionsJson,
   type OutputMode,
   type ReasoningEffort,
   type ReasoningMode,
@@ -13,6 +12,15 @@ export function useLanguageGenerationSettings() {
   const systemPrompt = shallowRef('')
   const temperature = shallowRef(0.7)
   const topP = shallowRef(1)
+  const topK = shallowRef<number | undefined>()
+  const minP = shallowRef<number | undefined>()
+  const presencePenalty = shallowRef<number | undefined>()
+  const frequencyPenalty = shallowRef<number | undefined>()
+  const repetitionPenalty = shallowRef<number | undefined>()
+  const stopSequencesText = shallowRef('')
+  const logprobs = shallowRef<boolean | undefined>()
+  const topLogprobs = shallowRef<number | undefined>()
+  const parallelToolCalls = shallowRef<boolean | undefined>()
   const maxTokens = shallowRef(1024)
   const seed = shallowRef<number | undefined>()
   const maxRetries = shallowRef<number | undefined>(2)
@@ -38,20 +46,30 @@ export function useLanguageGenerationSettings() {
 }`)
   const outputChoicesText = shallowRef('yes\nno')
   const outputError = shallowRef('')
-  const providerOptionsText = shallowRef('{}')
-  const providerOptionsError = shallowRef('')
   const chatHeadersText = shallowRef('{}')
   const chatHeadersError = shallowRef('')
 
   function buildParameters(
-    providerOptions: Record<string, Record<string, unknown>> | undefined,
     headers: Record<string, string> | undefined,
     output: ReturnType<typeof buildOutputSpec>['value'],
   ) {
+    const stopSequences = stopSequencesText.value
+      .split('\n')
+      .map((item) => item.trim())
+      .filter(Boolean)
     return {
       systemPrompt: systemPrompt.value,
       temperature: numberOrUndefined(temperature.value),
       topP: numberOrUndefined(topP.value),
+      topK: numberOrUndefined(topK.value),
+      minP: numberOrUndefined(minP.value),
+      presencePenalty: numberOrUndefined(presencePenalty.value),
+      frequencyPenalty: numberOrUndefined(frequencyPenalty.value),
+      repetitionPenalty: numberOrUndefined(repetitionPenalty.value),
+      stopSequences: stopSequences.length ? stopSequences : undefined,
+      logprobs: logprobs.value,
+      topLogprobs: numberOrUndefined(topLogprobs.value),
+      parallelToolCalls: parallelToolCalls.value,
       maxOutputTokens: numberOrUndefined(maxTokens.value),
       seed: numberOrUndefined(seed.value),
       maxRetries: numberOrUndefined(maxRetries.value),
@@ -59,17 +77,12 @@ export function useLanguageGenerationSettings() {
         mode: reasoningMode.value,
         effort: reasoningEffort.value,
       }),
-      providerOptions,
       headers,
       output,
     }
   }
 
   function buildValidatedParameters(): ReturnType<typeof buildParameters> | undefined {
-    const providerOptions = parseProviderOptionsJson(providerOptionsText.value)
-    providerOptionsError.value = providerOptions.error || ''
-    if (providerOptions.error) return undefined
-
     const headers = parseStringMapJson(chatHeadersText.value)
     chatHeadersError.value = headers.error || ''
     if (headers.error) return undefined
@@ -82,7 +95,7 @@ export function useLanguageGenerationSettings() {
     outputError.value = outputSpec.error || ''
     if (outputSpec.error) return undefined
 
-    return buildParameters(providerOptions.value, headers.value, outputSpec.value)
+    return buildParameters(headers.value, outputSpec.value)
   }
 
   function streamOptions() {
@@ -106,6 +119,15 @@ export function useLanguageGenerationSettings() {
     systemPrompt,
     temperature,
     topP,
+    topK,
+    minP,
+    presencePenalty,
+    frequencyPenalty,
+    repetitionPenalty,
+    stopSequencesText,
+    logprobs,
+    topLogprobs,
+    parallelToolCalls,
     maxTokens,
     seed,
     maxRetries,
@@ -120,8 +142,6 @@ export function useLanguageGenerationSettings() {
     outputSchemaText,
     outputChoicesText,
     outputError,
-    providerOptionsText,
-    providerOptionsError,
     chatHeadersText,
     chatHeadersError,
     buildParameters,

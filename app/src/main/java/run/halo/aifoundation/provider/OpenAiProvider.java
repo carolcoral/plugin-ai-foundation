@@ -1,10 +1,14 @@
 package run.halo.aifoundation.provider;
 
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.stereotype.Component;
 import run.halo.aifoundation.extension.AiProvider;
+import run.halo.aifoundation.provider.mapping.DefaultParameterMapping;
+import run.halo.aifoundation.provider.mapping.ModelParameter;
 import run.halo.aifoundation.provider.support.AdapterType;
 import run.halo.aifoundation.provider.support.EmbeddingModelProviderOptions;
 import run.halo.aifoundation.provider.support.LanguageModelProviderOptions;
@@ -15,6 +19,11 @@ import run.halo.aifoundation.provider.support.ReasoningControlOptions;
 
 @Component
 public class OpenAiProvider extends AbstractAiProviderType {
+
+    @Override
+    protected String defaultReasoningMappingTemplate() {
+        return "reasoning.effort";
+    }
 
     private static final String DEFAULT_BASE_URL = "https://api.openai.com/v1";
     private static final String COMPLETIONS_PATH = "/chat/completions";
@@ -97,4 +106,14 @@ public class OpenAiProvider extends AbstractAiProviderType {
     @Override
     public EmbeddingModelProviderOptions embeddingModelProviderOptions() {
         return new EmbeddingModelProviderOptions("openai", OpenAiEmbeddingOptionsFactory::build);
-    }}
+    }
+
+    @Override
+    public Map<ModelParameter, DefaultParameterMapping> getDefaultParameterMappings() {
+        var defaults = new EnumMap<ModelParameter, DefaultParameterMapping>(ModelParameter.class);
+        defaults.putAll(super.getDefaultParameterMappings());
+        defaults.put(ModelParameter.MIN_P, DefaultParameterMapping.unsupported());
+        defaults.put(ModelParameter.REPETITION_PENALTY, DefaultParameterMapping.unsupported());
+        return Map.copyOf(defaults);
+    }
+}

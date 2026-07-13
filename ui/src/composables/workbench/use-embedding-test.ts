@@ -1,6 +1,5 @@
 import { aiConsoleApiClient } from '@/api'
 import type { ModelOption, TestEmbeddingResponse } from '@/api/generated'
-import { parseProviderOptionsJson } from '@/utils/model-test-workbench'
 import { numberOrUndefined } from '@/utils/model-test-workbench-request'
 import { shallowRef, type ComputedRef } from 'vue'
 
@@ -10,8 +9,6 @@ export function useEmbeddingTest(selectedModel: ComputedRef<ModelOption | undefi
   const embeddingMaxBatchSize = shallowRef<number | undefined>(1)
   const embeddingMaxParallelCalls = shallowRef<number | undefined>(2)
   const embeddingMaxRetries = shallowRef<number | undefined>(1)
-  const embeddingProviderOptionsText = shallowRef('{}')
-  const embeddingProviderOptionsError = shallowRef('')
   const embeddingResult = shallowRef<TestEmbeddingResponse | undefined>()
   const embeddingError = shallowRef('')
   const isEmbeddingTesting = shallowRef(false)
@@ -28,10 +25,6 @@ export function useEmbeddingTest(selectedModel: ComputedRef<ModelOption | undefi
       embeddingError.value = '请至少输入一行文本'
       return
     }
-    const providerOptions = parseProviderOptionsJson(embeddingProviderOptionsText.value)
-    embeddingProviderOptionsError.value = providerOptions.error || ''
-    if (providerOptions.error) return
-
     embeddingError.value = ''
     embeddingResult.value = undefined
     isEmbeddingTesting.value = true
@@ -44,9 +37,6 @@ export function useEmbeddingTest(selectedModel: ComputedRef<ModelOption | undefi
           maxBatchSize: numberOrUndefined(embeddingMaxBatchSize.value),
           maxParallelCalls: numberOrUndefined(embeddingMaxParallelCalls.value),
           maxRetries: numberOrUndefined(embeddingMaxRetries.value),
-          providerOptions: providerOptions.value as
-            | { [key: string]: { [key: string]: object } }
-            | undefined,
         },
       })
       embeddingResult.value = data
@@ -71,8 +61,6 @@ export function useEmbeddingTest(selectedModel: ComputedRef<ModelOption | undefi
     embeddingMaxBatchSize,
     embeddingMaxParallelCalls,
     embeddingMaxRetries,
-    embeddingProviderOptionsText,
-    embeddingProviderOptionsError,
     embeddingResult,
     embeddingError,
     isEmbeddingTesting,

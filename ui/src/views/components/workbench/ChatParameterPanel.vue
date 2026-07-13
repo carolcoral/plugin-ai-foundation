@@ -9,6 +9,15 @@ const props = defineProps<{
   systemPrompt?: string
   temperature?: number
   topP?: number
+  topK?: number
+  minP?: number
+  presencePenalty?: number
+  frequencyPenalty?: number
+  repetitionPenalty?: number
+  stopSequencesText?: string
+  logprobs?: boolean
+  topLogprobs?: number
+  parallelToolCalls?: boolean
   maxTokens?: number
   seed?: number
   maxRetries?: number
@@ -22,10 +31,8 @@ const props = defineProps<{
   outputMode?: OutputMode
   outputSchemaText?: string
   outputChoicesText?: string
-  providerOptionsText?: string
   chatHeadersText?: string
   chatHeadersError?: string
-  providerOptionsError?: string
   outputError?: string
 }>()
 
@@ -33,6 +40,15 @@ const emit = defineEmits<{
   (e: 'update:systemPrompt', value: string): void
   (e: 'update:temperature', value: number): void
   (e: 'update:topP', value: number): void
+  (e: 'update:topK', value: number | undefined): void
+  (e: 'update:minP', value: number | undefined): void
+  (e: 'update:presencePenalty', value: number | undefined): void
+  (e: 'update:frequencyPenalty', value: number | undefined): void
+  (e: 'update:repetitionPenalty', value: number | undefined): void
+  (e: 'update:stopSequencesText', value: string): void
+  (e: 'update:logprobs', value: boolean | undefined): void
+  (e: 'update:topLogprobs', value: number | undefined): void
+  (e: 'update:parallelToolCalls', value: boolean | undefined): void
   (e: 'update:maxTokens', value: number): void
   (e: 'update:seed', value: number | undefined): void
   (e: 'update:maxRetries', value: number | undefined): void
@@ -46,7 +62,6 @@ const emit = defineEmits<{
   (e: 'update:outputMode', value: OutputMode): void
   (e: 'update:outputSchemaText', value: string): void
   (e: 'update:outputChoicesText', value: string): void
-  (e: 'update:providerOptionsText', value: string): void
   (e: 'update:chatHeadersText', value: string): void
 }>()
 
@@ -56,15 +71,21 @@ const outputSchemaHelp = computed(
     (props.outputMode === 'ARRAY' ? '用于校验每个数组元素' : '用于约束最终 JSON 对象'),
 )
 const outputChoicesHelp = computed(() => props.outputError || '每行一个可选值')
-const providerOptionsHelp = computed(
-  () =>
-    props.providerOptionsError || '请输入按服务商分组的 JSON 对象，例如 {"openai": {"seed": 42}}',
-)
 
-function updateNumberField(
-  key: 'temperature' | 'topP' | 'maxTokens' | 'seed' | 'maxRetries',
-  value: string,
-) {
+type NumberField =
+  | 'temperature'
+  | 'topP'
+  | 'topK'
+  | 'minP'
+  | 'presencePenalty'
+  | 'frequencyPenalty'
+  | 'repetitionPenalty'
+  | 'topLogprobs'
+  | 'maxTokens'
+  | 'seed'
+  | 'maxRetries'
+
+function updateNumberField(key: NumberField, value: string) {
   const number = value === '' ? undefined : Number(value)
   switch (key) {
     case 'temperature':
@@ -72,6 +93,24 @@ function updateNumberField(
       break
     case 'topP':
       emit('update:topP', number as number)
+      break
+    case 'topK':
+      emit('update:topK', number)
+      break
+    case 'minP':
+      emit('update:minP', number)
+      break
+    case 'presencePenalty':
+      emit('update:presencePenalty', number)
+      break
+    case 'frequencyPenalty':
+      emit('update:frequencyPenalty', number)
+      break
+    case 'repetitionPenalty':
+      emit('update:repetitionPenalty', number)
+      break
+    case 'topLogprobs':
+      emit('update:topLogprobs', number)
       break
     case 'maxTokens':
       emit('update:maxTokens', number as number)
@@ -203,6 +242,107 @@ function updateNumberField(
         >
           仅作用于可重试的非流式 provider 调用，0 表示不重试
         </div>
+      </div>
+    </details>
+
+    <details class=":uno: group border-b border-slate-200 last:border-b-0">
+      <summary
+        class=":uno: flex cursor-pointer select-none items-center gap-1.5 py-2 text-sm text-slate-800 font-semibold"
+      >
+        <RiArrowRightSLine class=":uno: size-4 transition-transform group-open:rotate-90" />
+        完整生成参数
+      </summary>
+      <div class=":uno: grid grid-cols-2 gap-2 pb-3 pl-5">
+        <label
+          v-for="field in [
+            { key: 'topK', label: 'Top K', value: topK, step: 1, min: 0 },
+            { key: 'minP', label: 'Min P', value: minP, step: 0.01, min: 0 },
+            { key: 'presencePenalty', label: '存在惩罚', value: presencePenalty, step: 0.1 },
+            { key: 'frequencyPenalty', label: '频率惩罚', value: frequencyPenalty, step: 0.1 },
+            {
+              key: 'repetitionPenalty',
+              label: '重复惩罚',
+              value: repetitionPenalty,
+              step: 0.1,
+              min: 0,
+            },
+            {
+              key: 'topLogprobs',
+              label: 'Top Logprobs',
+              value: topLogprobs,
+              step: 1,
+              min: 0,
+            },
+          ]"
+          :key="field.key"
+          class=":uno: text-xs text-slate-600"
+        >
+          {{ field.label }}
+          <input
+            type="number"
+            :value="field.value"
+            :step="field.step"
+            :min="field.min"
+            placeholder="默认"
+            class=":uno: mt-1 w-full text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs placeholder:text-slate-400 focus:!border-teal-400 focus:!ring-3 focus:!ring-teal-500/10"
+            @input="
+              updateNumberField(
+                field.key as NumberField,
+                ($event.target as HTMLInputElement).value,
+              )
+            "
+          />
+        </label>
+
+        <label class=":uno: col-span-2 text-xs text-slate-600">
+          停止序列（每行一个）
+          <textarea
+            :value="stopSequencesText"
+            rows="3"
+            class=":uno: mt-1 w-full resize-none text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs focus:!border-teal-400 focus:!ring-3 focus:!ring-teal-500/10"
+            @input="emit('update:stopSequencesText', ($event.target as HTMLTextAreaElement).value)"
+          />
+        </label>
+
+        <label class=":uno: text-xs text-slate-600">
+          Token 概率
+          <select
+            :value="logprobs === undefined ? '' : String(logprobs)"
+            class=":uno: mt-1 w-full text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs"
+            @change="
+              emit(
+                'update:logprobs',
+                ($event.target as HTMLSelectElement).value === ''
+                  ? undefined
+                  : ($event.target as HTMLSelectElement).value === 'true',
+              )
+            "
+          >
+            <option value="">默认</option>
+            <option value="true">启用</option>
+            <option value="false">禁用</option>
+          </select>
+        </label>
+
+        <label class=":uno: text-xs text-slate-600">
+          并行工具调用
+          <select
+            :value="parallelToolCalls === undefined ? '' : String(parallelToolCalls)"
+            class=":uno: mt-1 w-full text-slate-700 outline-none !border !border-slate-200 !rounded-md !border-solid !bg-white !px-2 !py-1.5 !text-xs"
+            @change="
+              emit(
+                'update:parallelToolCalls',
+                ($event.target as HTMLSelectElement).value === ''
+                  ? undefined
+                  : ($event.target as HTMLSelectElement).value === 'true',
+              )
+            "
+          >
+            <option value="">默认</option>
+            <option value="true">启用</option>
+            <option value="false">禁用</option>
+          </select>
+        </label>
       </div>
     </details>
 
@@ -378,30 +518,6 @@ function updateNumberField(
           halo_test_info 可用于服务端工具测试；外部工具会注入
           halo_external_test_info；修复测试会注入 halo_repair_test_info；前端自动工具会注入
           get_current_page_context 和 halo_agent_test_action，并由工作台前端自动回填工具结果。
-        </div>
-      </div>
-    </details>
-
-    <details class=":uno: group border-b border-slate-200 last:border-b-0">
-      <summary
-        class=":uno: flex cursor-pointer select-none items-center gap-1.5 py-2 text-sm text-slate-800 font-semibold"
-      >
-        <RiArrowRightSLine class=":uno: size-4 transition-transform group-open:rotate-90" />
-        Provider Options
-      </summary>
-      <div class=":uno: pb-3 pl-5">
-        <textarea
-          :value="providerOptionsText"
-          rows="6"
-          :class="{ ':uno: !border-rose-300': providerOptionsError }"
-          class=":uno: w-full text-slate-700 leading-relaxed font-mono outline-none transition-colors !border !border-slate-200 !rounded-md !border-solid !bg-white !px-3 !py-2 !text-xs placeholder:text-slate-400 focus:!border-teal-400 placeholder:!text-xs focus:!ring-3 focus:!ring-teal-500/10"
-          @input="emit('update:providerOptionsText', ($event.target as HTMLTextAreaElement).value)"
-        />
-        <div
-          class=":uno: mt-1 text-[10px]"
-          :class="providerOptionsError ? ':uno: text-rose-500' : ':uno: text-slate-400'"
-        >
-          {{ providerOptionsHelp }}
         </div>
       </div>
     </details>

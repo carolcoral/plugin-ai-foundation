@@ -4,7 +4,6 @@ import {
   type ModelOption,
   type TestImageGenerationResponse,
 } from '@/api/generated'
-import { parseProviderOptionsJson } from '@/utils/model-test-workbench'
 import {
   buildTestMediaContent,
   numberOrUndefined,
@@ -14,6 +13,7 @@ import { shallowRef, type ComputedRef } from 'vue'
 
 export function useImageGenerationTest(selectedModel: ComputedRef<ModelOption | undefined>) {
   const imagePrompt = shallowRef('一张简洁清晰的 Halo 控制台界面截图风格插图，浅色背景，细节真实')
+  const imageNegativePrompt = shallowRef('')
   const imageInputUrl = shallowRef('')
   const imageInputData = shallowRef('')
   const imageInputMediaType = shallowRef('image/png')
@@ -30,8 +30,6 @@ export function useImageGenerationTest(selectedModel: ComputedRef<ModelOption | 
   )
   const imageMaxRetries = shallowRef<number | undefined>(1)
   const imageMaxParallelCalls = shallowRef<number | undefined>(1)
-  const imageProviderOptionsText = shallowRef('{}')
-  const imageProviderOptionsError = shallowRef('')
   const imageHeadersText = shallowRef('{}')
   const imageHeadersError = shallowRef('')
   const imageResult = shallowRef<TestImageGenerationResponse | undefined>()
@@ -65,9 +63,6 @@ export function useImageGenerationTest(selectedModel: ComputedRef<ModelOption | 
       imageError.value = mask.error
       return
     }
-    const providerOptions = parseProviderOptionsJson(imageProviderOptionsText.value)
-    imageProviderOptionsError.value = providerOptions.error || ''
-    if (providerOptions.error) return
     const headers = parseStringMapJson(imageHeadersText.value)
     imageHeadersError.value = headers.error || ''
     if (headers.error) return
@@ -80,6 +75,7 @@ export function useImageGenerationTest(selectedModel: ComputedRef<ModelOption | 
         name: model.name,
         testImageGenerationRequest: {
           prompt: imagePrompt.value.trim(),
+          negativePrompt: imageNegativePrompt.value.trim() || undefined,
           images: image.value ? [image.value] : undefined,
           mask: mask.value,
           n: numberOrUndefined(imageN.value),
@@ -91,9 +87,6 @@ export function useImageGenerationTest(selectedModel: ComputedRef<ModelOption | 
             imageResponseFormat.value === 'DEFAULT' ? undefined : imageResponseFormat.value,
           maxRetries: numberOrUndefined(imageMaxRetries.value),
           maxParallelCalls: numberOrUndefined(imageMaxParallelCalls.value),
-          providerOptions: providerOptions.value as
-            | { [key: string]: { [key: string]: object } }
-            | undefined,
           headers: headers.value,
         },
       })
@@ -107,6 +100,7 @@ export function useImageGenerationTest(selectedModel: ComputedRef<ModelOption | 
 
   return {
     imagePrompt,
+    imageNegativePrompt,
     imageInputUrl,
     imageInputData,
     imageInputMediaType,
@@ -121,8 +115,6 @@ export function useImageGenerationTest(selectedModel: ComputedRef<ModelOption | 
     imageResponseFormat,
     imageMaxRetries,
     imageMaxParallelCalls,
-    imageProviderOptionsText,
-    imageProviderOptionsError,
     imageHeadersText,
     imageHeadersError,
     imageResult,

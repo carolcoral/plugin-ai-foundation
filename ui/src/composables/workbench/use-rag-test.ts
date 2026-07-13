@@ -5,7 +5,6 @@ import {
   buildReasoningOptions,
   createAssistantUIMessage,
   createUserUIMessage,
-  parseProviderOptionsJson,
   testRagUiMessageStreamUrl,
   workbenchDataPartSchemas,
   workbenchMessageMetadataSchema,
@@ -16,7 +15,7 @@ import {
   haloMessageToWorkbench,
   workbenchMessagesToHalo,
 } from '@/utils/model-test-workbench-messages'
-import { numberOrUndefined } from '@/utils/model-test-workbench-request'
+import { numberOrUndefined, parseStringMapJson } from '@/utils/model-test-workbench-request'
 import {
   DefaultChatTransport,
   useChat,
@@ -54,10 +53,6 @@ export function useRagTest({ selectedModel, settings }: UseRagTestOptions) {
   const ragSources = ref<TestRagSource[]>(initialSources())
   const ragRerankModelName = shallowRef<string | undefined>()
   const ragTopN = shallowRef<number | undefined>(4)
-  const ragProviderOptionsText = shallowRef('{}')
-  const ragProviderOptionsError = shallowRef('')
-  const ragRerankProviderOptionsText = shallowRef('{}')
-  const ragRerankProviderOptionsError = shallowRef('')
   const ragMessages = ref<WorkbenchMessage[]>([])
   const ragError = shallowRef('')
   const isRagTesting = shallowRef(false)
@@ -111,14 +106,10 @@ export function useRagTest({ selectedModel, settings }: UseRagTestOptions) {
       ragError.value = '请至少填写一个来源内容'
       return
     }
-    const providerOptions = parseProviderOptionsJson(ragProviderOptionsText.value)
-    ragProviderOptionsError.value = providerOptions.error || ''
-    if (providerOptions.error) return
-    const rerankProviderOptions = parseProviderOptionsJson(ragRerankProviderOptionsText.value)
-    ragRerankProviderOptionsError.value = rerankProviderOptions.error || ''
-    if (rerankProviderOptions.error) return
-
     ragError.value = ''
+    const headers = parseStringMapJson(settings.chatHeadersText.value)
+    settings.chatHeadersError.value = headers.error || ''
+    if (headers.error) return
     ragMessages.value = [
       {
         id: utils.id.uuid(),
@@ -131,6 +122,10 @@ export function useRagTest({ selectedModel, settings }: UseRagTestOptions) {
     assistantMessage.uiMessage = createAssistantUIMessage(assistantMessage.id)
     ragMessages.value.push(assistantMessage)
     const assistantMessageId = assistantMessage.id
+    const stopSequences = settings.stopSequencesText.value
+      .split('\n')
+      .map((item) => item.trim())
+      .filter(Boolean)
     const requestBody = {
       query: ragQuery.value.trim(),
       system: settings.systemPrompt.value.trim() || undefined,
@@ -139,19 +134,23 @@ export function useRagTest({ selectedModel, settings }: UseRagTestOptions) {
       topN: numberOrUndefined(ragTopN.value),
       temperature: numberOrUndefined(settings.temperature.value),
       topP: numberOrUndefined(settings.topP.value),
+      topK: numberOrUndefined(settings.topK.value),
+      minP: numberOrUndefined(settings.minP.value),
+      presencePenalty: numberOrUndefined(settings.presencePenalty.value),
+      frequencyPenalty: numberOrUndefined(settings.frequencyPenalty.value),
+      repetitionPenalty: numberOrUndefined(settings.repetitionPenalty.value),
+      stopSequences: stopSequences.length ? stopSequences : undefined,
+      logprobs: settings.logprobs.value,
+      topLogprobs: numberOrUndefined(settings.topLogprobs.value),
+      parallelToolCalls: settings.parallelToolCalls.value,
       maxOutputTokens: numberOrUndefined(settings.maxTokens.value),
       seed: numberOrUndefined(settings.seed.value),
       maxRetries: numberOrUndefined(settings.maxRetries.value),
+      headers: headers.value,
       reasoning: buildReasoningOptions({
         mode: settings.reasoningMode.value,
         effort: settings.reasoningEffort.value,
       }),
-      providerOptions: providerOptions.value as
-        | { [key: string]: { [key: string]: object } }
-        | undefined,
-      rerankProviderOptions: rerankProviderOptions.value as
-        | { [key: string]: { [key: string]: object } }
-        | undefined,
       ragOptions: {
         emptyContextPolicy: 'CONTINUE_WITHOUT_CONTEXT',
         rerankFailurePolicy: 'USE_RETRIEVED_ORDER',
@@ -257,10 +256,6 @@ export function useRagTest({ selectedModel, settings }: UseRagTestOptions) {
     ragSources,
     ragRerankModelName,
     ragTopN,
-    ragProviderOptionsText,
-    ragProviderOptionsError,
-    ragRerankProviderOptionsText,
-    ragRerankProviderOptionsError,
     ragMessages,
     ragError,
     isRagTesting,

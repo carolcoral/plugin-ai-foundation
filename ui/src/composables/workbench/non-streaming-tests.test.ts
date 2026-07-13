@@ -31,7 +31,6 @@ describe('non-streaming workbench tests', () => {
     const test = useEmbeddingTest(selectedModel)
     test.embeddingInputs.value = ' first \n\n second '
     test.embeddingDimensions.value = 512
-    test.embeddingProviderOptionsText.value = '{"openai":{"encodingFormat":"float"}}'
 
     await test.runEmbeddingTest()
 
@@ -43,7 +42,6 @@ describe('non-streaming workbench tests', () => {
         maxBatchSize: 1,
         maxParallelCalls: 2,
         maxRetries: 1,
-        providerOptions: { openai: { encodingFormat: 'float' } },
       },
     })
     expect(test.embeddingResult.value).toBe(response)
@@ -62,13 +60,14 @@ describe('non-streaming workbench tests', () => {
     } as never)
     test.rerankQuery.value = 'question'
     test.rerankDocuments.value = 'doc one\n\n doc two '
+    test.rerankTopN.value = 1
     await test.runRerankTest()
     expect(aiConsoleApiClient.model.testModelRerank).toHaveBeenCalledWith({
       name: 'model-1',
       testRerankRequest: {
         query: 'question',
         documents: ['doc one', 'doc two'],
-        providerOptions: {},
+        topN: 1,
       },
     })
   })
@@ -79,6 +78,7 @@ describe('non-streaming workbench tests', () => {
     } as never)
     const test = useImageGenerationTest(selectedModel)
     test.imagePrompt.value = ' draw halo '
+    test.imageNegativePrompt.value = ' blurry '
     test.imageInputUrl.value = 'https://example.com/input.png'
     test.imageAspectRatio.value = '16:9'
     test.imageHeadersText.value = '{"X-Trace":123}'
@@ -89,6 +89,7 @@ describe('non-streaming workbench tests', () => {
       name: 'model-1',
       testImageGenerationRequest: expect.objectContaining({
         prompt: 'draw halo',
+        negativePrompt: 'blurry',
         images: [{ url: 'https://example.com/input.png', mediaType: 'image/png' }],
         aspectRatio: '16:9',
         responseFormat: undefined,

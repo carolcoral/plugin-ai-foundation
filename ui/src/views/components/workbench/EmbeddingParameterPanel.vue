@@ -6,8 +6,6 @@ defineProps<{
   embeddingMaxBatchSize?: number
   embeddingMaxParallelCalls?: number
   embeddingMaxRetries?: number
-  embeddingProviderOptionsText?: string
-  embeddingProviderOptionsError?: string
 }>()
 
 const emit = defineEmits<{
@@ -15,7 +13,6 @@ const emit = defineEmits<{
   (e: 'update:embeddingMaxBatchSize', value: number | undefined): void
   (e: 'update:embeddingMaxParallelCalls', value: number | undefined): void
   (e: 'update:embeddingMaxRetries', value: number | undefined): void
-  (e: 'update:embeddingProviderOptionsText', value: string): void
 }>()
 
 type NumberField =
@@ -119,33 +116,5 @@ function updateNumberField(key: NumberField, value: string) {
       </div>
     </details>
 
-    <details class=":uno: group border-b border-slate-200 last:border-b-0">
-      <summary
-        class=":uno: flex cursor-pointer select-none items-center gap-1.5 py-2 text-sm text-slate-800 font-semibold"
-      >
-        <RiArrowRightSLine class=":uno: size-4 transition-transform group-open:rotate-90" />
-        Provider Options
-      </summary>
-      <div class=":uno: pb-3 pl-5">
-        <textarea
-          :value="embeddingProviderOptionsText"
-          rows="6"
-          :class="{ ':uno: !border-rose-300': embeddingProviderOptionsError }"
-          class=":uno: w-full text-slate-700 leading-relaxed font-mono outline-none transition-colors !border !border-slate-200 !rounded-md !border-solid !bg-white !px-3 !py-2 !text-xs placeholder:text-slate-400 focus:!border-teal-400 placeholder:!text-xs focus:!ring-3 focus:!ring-teal-500/10"
-          @input="
-            emit(
-              'update:embeddingProviderOptionsText',
-              ($event.target as HTMLTextAreaElement).value,
-            )
-          "
-        />
-        <div
-          class=":uno: mt-1 text-[10px]"
-          :class="embeddingProviderOptionsError ? ':uno: text-rose-500' : ':uno: text-slate-400'"
-        >
-          {{ embeddingProviderOptionsError || '例如 openai.dimensions = 512' }}
-        </div>
-      </div>
-    </details>
   </div>
 </template>

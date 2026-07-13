@@ -13,8 +13,6 @@ const props = defineProps<{
   imageResponseFormat?: ImageResponseFormat
   imageMaxRetries?: number
   imageMaxParallelCalls?: number
-  imageProviderOptionsText?: string
-  imageProviderOptionsError?: string
   imageHeadersText?: string
   imageHeadersError?: string
 }>()
@@ -28,13 +26,9 @@ const emit = defineEmits<{
   (e: 'update:imageResponseFormat', value: ImageResponseFormat): void
   (e: 'update:imageMaxRetries', value: number | undefined): void
   (e: 'update:imageMaxParallelCalls', value: number | undefined): void
-  (e: 'update:imageProviderOptionsText', value: string): void
   (e: 'update:imageHeadersText', value: string): void
 }>()
 
-const imageProviderOptionsHelp = computed(
-  () => props.imageProviderOptionsError || '按服务商命名空间传递图片生成扩展参数',
-)
 const imageHeadersHelp = computed(
   () => props.imageHeadersError || '请求级 headers，当前 provider 不支持时会返回 warning 或错误',
 )
@@ -190,32 +184,6 @@ function updateNumberField(key: NumberField, value: string) {
               "
             />
           </div>
-        </div>
-      </div>
-    </details>
-
-    <details class=":uno: group border-b border-slate-200 last:border-b-0">
-      <summary
-        class=":uno: flex cursor-pointer select-none items-center gap-1.5 py-2 text-sm text-slate-800 font-semibold"
-      >
-        <RiArrowRightSLine class=":uno: size-4 transition-transform group-open:rotate-90" />
-        Provider Options
-      </summary>
-      <div class=":uno: pb-3 pl-5">
-        <textarea
-          :value="imageProviderOptionsText"
-          rows="6"
-          :class="{ ':uno: !border-rose-300': imageProviderOptionsError }"
-          class=":uno: w-full text-slate-700 leading-relaxed font-mono outline-none transition-colors !border !border-slate-200 !rounded-md !border-solid !bg-white !px-3 !py-2 !text-xs placeholder:text-slate-400 focus:!border-teal-400 focus:!ring-3 focus:!ring-teal-500/10"
-          @input="
-            emit('update:imageProviderOptionsText', ($event.target as HTMLTextAreaElement).value)
-          "
-        />
-        <div
-          class=":uno: mt-1 text-[10px]"
-          :class="imageProviderOptionsError ? ':uno: text-rose-500' : ':uno: text-slate-400'"
-        >
-          {{ imageProviderOptionsHelp }}
         </div>
       </div>
     </details>

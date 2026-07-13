@@ -12,6 +12,15 @@ defineProps<{
   systemPrompt?: string
   temperature?: number
   topP?: number
+  topK?: number
+  minP?: number
+  presencePenalty?: number
+  frequencyPenalty?: number
+  repetitionPenalty?: number
+  stopSequencesText?: string
+  logprobs?: boolean
+  topLogprobs?: number
+  parallelToolCalls?: boolean
   maxTokens?: number
   seed?: number
   maxRetries?: number
@@ -25,17 +34,13 @@ defineProps<{
   outputMode?: OutputMode
   outputSchemaText?: string
   outputChoicesText?: string
-  providerOptionsText?: string
   chatHeadersText?: string
   chatHeadersError?: string
-  providerOptionsError?: string
   outputError?: string
   embeddingDimensions?: number
   embeddingMaxBatchSize?: number
   embeddingMaxParallelCalls?: number
   embeddingMaxRetries?: number
-  embeddingProviderOptionsText?: string
-  embeddingProviderOptionsError?: string
   imageN?: number
   imageWidth?: number
   imageHeight?: number
@@ -44,8 +49,6 @@ defineProps<{
   imageResponseFormat?: ImageResponseFormat
   imageMaxRetries?: number
   imageMaxParallelCalls?: number
-  imageProviderOptionsText?: string
-  imageProviderOptionsError?: string
   imageHeadersText?: string
   imageHeadersError?: string
 }>()
@@ -54,6 +57,15 @@ const emit = defineEmits<{
   'update:systemPrompt': [value: string]
   'update:temperature': [value: number]
   'update:topP': [value: number]
+  'update:topK': [value: number | undefined]
+  'update:minP': [value: number | undefined]
+  'update:presencePenalty': [value: number | undefined]
+  'update:frequencyPenalty': [value: number | undefined]
+  'update:repetitionPenalty': [value: number | undefined]
+  'update:stopSequencesText': [value: string]
+  'update:logprobs': [value: boolean | undefined]
+  'update:topLogprobs': [value: number | undefined]
+  'update:parallelToolCalls': [value: boolean | undefined]
   'update:maxTokens': [value: number]
   'update:seed': [value: number | undefined]
   'update:maxRetries': [value: number | undefined]
@@ -67,13 +79,11 @@ const emit = defineEmits<{
   'update:outputMode': [value: OutputMode]
   'update:outputSchemaText': [value: string]
   'update:outputChoicesText': [value: string]
-  'update:providerOptionsText': [value: string]
   'update:chatHeadersText': [value: string]
   'update:embeddingDimensions': [value: number | undefined]
   'update:embeddingMaxBatchSize': [value: number | undefined]
   'update:embeddingMaxParallelCalls': [value: number | undefined]
   'update:embeddingMaxRetries': [value: number | undefined]
-  'update:embeddingProviderOptionsText': [value: string]
   'update:imageN': [value: number | undefined]
   'update:imageWidth': [value: number | undefined]
   'update:imageHeight': [value: number | undefined]
@@ -82,7 +92,6 @@ const emit = defineEmits<{
   'update:imageResponseFormat': [value: ImageResponseFormat]
   'update:imageMaxRetries': [value: number | undefined]
   'update:imageMaxParallelCalls': [value: number | undefined]
-  'update:imageProviderOptionsText': [value: string]
   'update:imageHeadersText': [value: string]
 }>()
 </script>
@@ -107,6 +116,15 @@ const emit = defineEmits<{
         :system-prompt="systemPrompt"
         :temperature="temperature"
         :top-p="topP"
+        :top-k="topK"
+        :min-p="minP"
+        :presence-penalty="presencePenalty"
+        :frequency-penalty="frequencyPenalty"
+        :repetition-penalty="repetitionPenalty"
+        :stop-sequences-text="stopSequencesText"
+        :logprobs="logprobs"
+        :top-logprobs="topLogprobs"
+        :parallel-tool-calls="parallelToolCalls"
         :max-tokens="maxTokens"
         :seed="seed"
         :max-retries="maxRetries"
@@ -120,14 +138,21 @@ const emit = defineEmits<{
         :output-mode="outputMode"
         :output-schema-text="outputSchemaText"
         :output-choices-text="outputChoicesText"
-        :provider-options-text="providerOptionsText"
-        :provider-options-error="providerOptionsError"
         :chat-headers-text="chatHeadersText"
         :chat-headers-error="chatHeadersError"
         :output-error="outputError"
         @update:system-prompt="emit('update:systemPrompt', $event)"
         @update:temperature="emit('update:temperature', $event)"
         @update:top-p="emit('update:topP', $event)"
+        @update:top-k="emit('update:topK', $event)"
+        @update:min-p="emit('update:minP', $event)"
+        @update:presence-penalty="emit('update:presencePenalty', $event)"
+        @update:frequency-penalty="emit('update:frequencyPenalty', $event)"
+        @update:repetition-penalty="emit('update:repetitionPenalty', $event)"
+        @update:stop-sequences-text="emit('update:stopSequencesText', $event)"
+        @update:logprobs="emit('update:logprobs', $event)"
+        @update:top-logprobs="emit('update:topLogprobs', $event)"
+        @update:parallel-tool-calls="emit('update:parallelToolCalls', $event)"
         @update:max-tokens="emit('update:maxTokens', $event)"
         @update:seed="emit('update:seed', $event)"
         @update:max-retries="emit('update:maxRetries', $event)"
@@ -141,7 +166,6 @@ const emit = defineEmits<{
         @update:output-mode="emit('update:outputMode', $event)"
         @update:output-schema-text="emit('update:outputSchemaText', $event)"
         @update:output-choices-text="emit('update:outputChoicesText', $event)"
-        @update:provider-options-text="emit('update:providerOptionsText', $event)"
         @update:chat-headers-text="emit('update:chatHeadersText', $event)"
       />
 
@@ -151,15 +175,10 @@ const emit = defineEmits<{
         :embedding-max-batch-size="embeddingMaxBatchSize"
         :embedding-max-parallel-calls="embeddingMaxParallelCalls"
         :embedding-max-retries="embeddingMaxRetries"
-        :embedding-provider-options-text="embeddingProviderOptionsText"
-        :embedding-provider-options-error="embeddingProviderOptionsError"
         @update:embedding-dimensions="emit('update:embeddingDimensions', $event)"
         @update:embedding-max-batch-size="emit('update:embeddingMaxBatchSize', $event)"
         @update:embedding-max-parallel-calls="emit('update:embeddingMaxParallelCalls', $event)"
         @update:embedding-max-retries="emit('update:embeddingMaxRetries', $event)"
-        @update:embedding-provider-options-text="
-          emit('update:embeddingProviderOptionsText', $event)
-        "
       />
 
       <ImageParameterPanel
@@ -172,8 +191,6 @@ const emit = defineEmits<{
         :image-response-format="imageResponseFormat"
         :image-max-retries="imageMaxRetries"
         :image-max-parallel-calls="imageMaxParallelCalls"
-        :image-provider-options-text="imageProviderOptionsText"
-        :image-provider-options-error="imageProviderOptionsError"
         :image-headers-text="imageHeadersText"
         :image-headers-error="imageHeadersError"
         @update:image-n="emit('update:imageN', $event)"
@@ -184,7 +201,6 @@ const emit = defineEmits<{
         @update:image-response-format="emit('update:imageResponseFormat', $event)"
         @update:image-max-retries="emit('update:imageMaxRetries', $event)"
         @update:image-max-parallel-calls="emit('update:imageMaxParallelCalls', $event)"
-        @update:image-provider-options-text="emit('update:imageProviderOptionsText', $event)"
         @update:image-headers-text="emit('update:imageHeadersText', $event)"
       />
     </div>

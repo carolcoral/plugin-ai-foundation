@@ -41,6 +41,15 @@ const {
   systemPrompt,
   temperature,
   topP,
+  topK,
+  minP,
+  presencePenalty,
+  frequencyPenalty,
+  repetitionPenalty,
+  stopSequencesText,
+  logprobs,
+  topLogprobs,
+  parallelToolCalls,
   maxTokens,
   seed,
   maxRetries,
@@ -55,8 +64,6 @@ const {
   outputSchemaText,
   outputChoicesText,
   outputError,
-  providerOptionsText,
-  providerOptionsError,
   chatHeadersText,
   chatHeadersError,
 } = languageSettings
@@ -96,8 +103,6 @@ const {
   embeddingMaxBatchSize,
   embeddingMaxParallelCalls,
   embeddingMaxRetries,
-  embeddingProviderOptionsText,
-  embeddingProviderOptionsError,
   embeddingResult,
   embeddingError,
   isEmbeddingTesting,
@@ -109,8 +114,7 @@ const rerankTest = useRerankTest(selectedModel)
 const {
   rerankQuery,
   rerankDocuments,
-  rerankProviderOptionsText,
-  rerankProviderOptionsError,
+  rerankTopN,
   rerankResult,
   rerankError,
   isRerankTesting,
@@ -126,6 +130,7 @@ const {
   imageMaskUrl,
   imageMaskData,
   imageMaskMediaType,
+  imageNegativePrompt,
   imageN,
   imageWidth,
   imageHeight,
@@ -134,8 +139,6 @@ const {
   imageResponseFormat,
   imageMaxRetries,
   imageMaxParallelCalls,
-  imageProviderOptionsText,
-  imageProviderOptionsError,
   imageHeadersText,
   imageHeadersError,
   imageResult,
@@ -150,10 +153,6 @@ const {
   ragSources,
   ragRerankModelName,
   ragTopN,
-  ragProviderOptionsText,
-  ragProviderOptionsError,
-  ragRerankProviderOptionsText,
-  ragRerankProviderOptionsError,
   ragMessages,
   ragError,
   isRagTesting,
@@ -322,15 +321,14 @@ function distanceToConversationBottom(element: HTMLElement) {
           <RerankTestPanel
             :query="rerankQuery"
             :documents="rerankDocuments"
-            :provider-options-text="rerankProviderOptionsText"
-            :provider-options-error="rerankProviderOptionsError"
+            :top-n="rerankTopN"
             :result="rerankResult"
             :error="rerankError"
             :is-loading="isRerankTesting"
             :disabled="!selectedModel"
             @update:query="rerankQuery = $event"
             @update:documents="rerankDocuments = $event"
-            @update:provider-options-text="rerankProviderOptionsText = $event"
+            @update:top-n="rerankTopN = $event"
             @run="runRerankTest"
           />
         </template>
@@ -344,6 +342,7 @@ function distanceToConversationBottom(element: HTMLElement) {
             :mask-url="imageMaskUrl"
             :mask-data="imageMaskData"
             :mask-media-type="imageMaskMediaType"
+            :negative-prompt="imageNegativePrompt"
             :result="imageResult"
             :error="imageError"
             :is-loading="isImageTesting"
@@ -355,6 +354,7 @@ function distanceToConversationBottom(element: HTMLElement) {
             @update:mask-url="imageMaskUrl = $event"
             @update:mask-data="imageMaskData = $event"
             @update:mask-media-type="imageMaskMediaType = $event"
+            @update:negative-prompt="imageNegativePrompt = $event"
             @run="runImageGenerationTest"
           />
         </template>
@@ -366,10 +366,6 @@ function distanceToConversationBottom(element: HTMLElement) {
             :rerank-model-name="ragRerankModelName"
             :rerank-models="rerankModels"
             :top-n="ragTopN"
-            :provider-options-text="ragProviderOptionsText"
-            :provider-options-error="ragProviderOptionsError"
-            :rerank-provider-options-text="ragRerankProviderOptionsText"
-            :rerank-provider-options-error="ragRerankProviderOptionsError"
             :messages="ragMessages"
             :error="ragError"
             :is-loading="isRagTesting"
@@ -378,8 +374,6 @@ function distanceToConversationBottom(element: HTMLElement) {
             @update:sources="ragSources = $event"
             @update:rerank-model-name="ragRerankModelName = $event"
             @update:top-n="ragTopN = $event"
-            @update:provider-options-text="ragProviderOptionsText = $event"
-            @update:rerank-provider-options-text="ragRerankProviderOptionsText = $event"
             @run="runRagTest"
             @clear="clearRagMessages"
           />
@@ -391,6 +385,15 @@ function distanceToConversationBottom(element: HTMLElement) {
         :system-prompt="systemPrompt"
         :temperature="temperature"
         :top-p="topP"
+        :top-k="topK"
+        :min-p="minP"
+        :presence-penalty="presencePenalty"
+        :frequency-penalty="frequencyPenalty"
+        :repetition-penalty="repetitionPenalty"
+        :stop-sequences-text="stopSequencesText"
+        :logprobs="logprobs"
+        :top-logprobs="topLogprobs"
+        :parallel-tool-calls="parallelToolCalls"
         :max-tokens="maxTokens"
         :seed="seed"
         :max-retries="maxRetries"
@@ -404,8 +407,6 @@ function distanceToConversationBottom(element: HTMLElement) {
         :output-mode="outputMode"
         :output-schema-text="outputSchemaText"
         :output-choices-text="outputChoicesText"
-        :provider-options-text="providerOptionsText"
-        :provider-options-error="providerOptionsError"
         :chat-headers-text="chatHeadersText"
         :chat-headers-error="chatHeadersError"
         :output-error="outputError"
@@ -413,8 +414,6 @@ function distanceToConversationBottom(element: HTMLElement) {
         :embedding-max-batch-size="embeddingMaxBatchSize"
         :embedding-max-parallel-calls="embeddingMaxParallelCalls"
         :embedding-max-retries="embeddingMaxRetries"
-        :embedding-provider-options-text="embeddingProviderOptionsText"
-        :embedding-provider-options-error="embeddingProviderOptionsError"
         :image-n="imageN"
         :image-width="imageWidth"
         :image-height="imageHeight"
@@ -423,13 +422,20 @@ function distanceToConversationBottom(element: HTMLElement) {
         :image-response-format="imageResponseFormat"
         :image-max-retries="imageMaxRetries"
         :image-max-parallel-calls="imageMaxParallelCalls"
-        :image-provider-options-text="imageProviderOptionsText"
-        :image-provider-options-error="imageProviderOptionsError"
         :image-headers-text="imageHeadersText"
         :image-headers-error="imageHeadersError"
         @update:system-prompt="systemPrompt = $event"
         @update:temperature="temperature = $event"
         @update:top-p="topP = $event"
+        @update:top-k="topK = $event"
+        @update:min-p="minP = $event"
+        @update:presence-penalty="presencePenalty = $event"
+        @update:frequency-penalty="frequencyPenalty = $event"
+        @update:repetition-penalty="repetitionPenalty = $event"
+        @update:stop-sequences-text="stopSequencesText = $event"
+        @update:logprobs="logprobs = $event"
+        @update:top-logprobs="topLogprobs = $event"
+        @update:parallel-tool-calls="parallelToolCalls = $event"
         @update:max-tokens="maxTokens = $event"
         @update:seed="seed = $event"
         @update:max-retries="maxRetries = $event"
@@ -443,13 +449,11 @@ function distanceToConversationBottom(element: HTMLElement) {
         @update:output-mode="outputMode = $event"
         @update:output-schema-text="outputSchemaText = $event"
         @update:output-choices-text="outputChoicesText = $event"
-        @update:provider-options-text="providerOptionsText = $event"
         @update:chat-headers-text="chatHeadersText = $event"
         @update:embedding-dimensions="embeddingDimensions = $event"
         @update:embedding-max-batch-size="embeddingMaxBatchSize = $event"
         @update:embedding-max-parallel-calls="embeddingMaxParallelCalls = $event"
         @update:embedding-max-retries="embeddingMaxRetries = $event"
-        @update:embedding-provider-options-text="embeddingProviderOptionsText = $event"
         @update:image-n="imageN = $event"
         @update:image-width="imageWidth = $event"
         @update:image-height="imageHeight = $event"
@@ -458,7 +462,6 @@ function distanceToConversationBottom(element: HTMLElement) {
         @update:image-response-format="imageResponseFormat = $event"
         @update:image-max-retries="imageMaxRetries = $event"
         @update:image-max-parallel-calls="imageMaxParallelCalls = $event"
-        @update:image-provider-options-text="imageProviderOptionsText = $event"
         @update:image-headers-text="imageHeadersText = $event"
       />
     </div>
