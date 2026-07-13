@@ -284,7 +284,7 @@ function distanceToConversationBottom(element: HTMLElement) {
           />
 
           <div class=":uno: border-t border-slate-200 bg-white/95 px-4 py-3">
-            <div class=":uno: mx-auto max-w-4xl">
+            <div class=":uno: mx-auto max-w-5xl">
               <div
                 class=":uno: relative flex-1 border border-slate-200 rounded-lg bg-slate-50 shadow-inner transition-colors focus-within:border-teal-400 focus-within:bg-white focus-within:ring-3 focus-within:ring-teal-500/10"
               >
