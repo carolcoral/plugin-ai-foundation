@@ -75,7 +75,7 @@ function handleDelete() {
         name: props.model.metadata.name,
       })
       Toast.success('模型删除成功')
-      queryClient.invalidateQueries({ queryKey: [QK_MODELS, props.model.spec.providerName] })
+      queryClient.invalidateQueries({ queryKey: [QK_MODELS] })
     },
   })
 }

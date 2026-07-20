@@ -61,7 +61,7 @@ const { mutate, isPending } = useMutation({
   onSuccess: () => {
     Toast.success('模型编辑成功')
     modal.value?.close()
-    queryClient.invalidateQueries({ queryKey: [QK_MODELS, providerName] })
+    queryClient.invalidateQueries({ queryKey: [QK_MODELS] })
   },
 })
 
