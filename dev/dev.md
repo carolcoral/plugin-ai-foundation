@@ -228,6 +228,15 @@ UIMessageChatResult<Map<String, Object>> chat = UIMessageChatHandlers.streamText
 UIMessageStreamResponse response = chat.response();
 ```
 
+Vue 前端可以安装 `@halo-dev/ai-foundation-sdk` 消费 UI Message SSE：
+
+```bash
+pnpm add @halo-dev/ai-foundation-sdk
+```
+
+前端 SDK 提供 `useChat`、`DefaultChatTransport`、`readUIMessageStream` 等入口。完整用法见
+[前端 SDK 中文文档](../ui/packages/sdk/README.zh-CN.md)。
+
 `response.headers()` 会自动包含：
 
 ```http
@@ -823,6 +832,7 @@ return model.generateText(request)
 | `toolCallRepair` | 工具入参修复回调 |
 | `cancellationToken` | 取消信号 |
 | `timeouts` | 总耗时、单步骤和工具超时 |
+| `middleware` | 本次请求使用的语言模型 middleware |
 
 ### `GenerateTextResult`
 
@@ -832,6 +842,7 @@ return model.generateText(request)
 | `output` / `outputText` | 结构化输出解析结果和原始输出文本 |
 | `reasoningText` / `reasoning` | 推理文本和推理 part |
 | `content` | 标准化内容 part |
+| `sources` | 可展示的来源引用 |
 | `finishReason` / `rawFinishReason` | 标准化结束原因和供应方原始结束原因 |
 | `usage` / `totalUsage` | 最后一步 usage 和总 usage |
 | `warnings` | 可恢复告警或能力差异 |
@@ -855,6 +866,8 @@ return model.generateText(request)
 | `result()` | 最终 `GenerateTextResult` |
 | `text()` / `reasoningText()` | 最终文本和推理文本快捷读取 |
 | `content()` / `reasoning()` | 内容 part 和推理 part 快捷读取 |
+| `sources()` | 来源引用快捷读取 |
+| `finishReason()` / `rawFinishReason()` | 结束原因快捷读取 |
 | `usage()` / `totalUsage()` | usage 快捷读取 |
 | `warnings()` | warning 快捷读取 |
 | `request()` / `response()` | 请求和响应元数据快捷读取 |
@@ -913,8 +926,11 @@ return model.generateText(request)
 | `GenerateImageRequest` | `responseFormat` | URL 或 base64 偏好 |
 | `GenerateImageRequest` | `negativePrompt` | 不希望出现在图片中的内容 |
 | `GenerateImageRequest` | `headers` | 请求级 HTTP header |
+| `GenerateImageRequest` | `maxRetries` | 可重试调用次数 |
+| `GenerateImageRequest` | `maxParallelCalls` | 拆分调用时的最大并行数 |
 | `GenerateImageRequest` | `metadata` / `context` | 调用方数据 |
 | `GenerateImageRequest` | `cancellationToken` / `timeouts` | 取消和超时 |
+| `GenerateImageRequest` | `middleware` | 本次请求使用的图像生成 middleware |
 | `GenerateImageResult` | `image` | 第一张生成图快捷读取 |
 | `GenerateImageResult` | `images` | 全部生成文件 |
 | `GenerateImageResult` | `usage` / `responses` | usage 和响应元数据 |
@@ -929,6 +945,7 @@ return model.generateText(request)
 | `RerankRequest` | `topN` | 返回结果上限 |
 | `RerankRequest` | `metadata` / `context` | 调用方数据 |
 | `RerankRequest` | `cancellationToken` / `timeouts` | 取消和超时 |
+| `RerankResponse` | `query` | 本次排序使用的查询文本 |
 | `RerankResponse` | `results` | 排序结果 |
 | `RerankResponse` | `usage` / `response` | usage 和响应元数据 |
 | `RerankResponse` | `warnings` / `providerMetadata` | 告警和供应方元数据 |
@@ -954,6 +971,7 @@ return model.generateText(request)
 
 | 类型 | 关键字段 | 说明 |
 | --- | --- | --- |
+| `StepStartPart` | 无 | 标记持久化 assistant 消息中的 generation step 边界 |
 | `TextPart` | `id`, `text` | 文本 |
 | `ReasoningPart` | `id`, `text`, `providerMetadata` | 推理内容 |
 | `DataPart` | `name`, `data` | 自定义数据 |
@@ -965,6 +983,10 @@ return model.generateText(request)
 | `ToolErrorPart` | `toolCallId`, `toolName`, `errorText` | 工具错误 |
 | `ToolApprovalRequestPart` | `approvalId`, `toolCallId`, `toolName`, `input` | 工具审批请求 |
 | `ToolApprovalResponsePart` | `approvalId`, `approved`, `reason` | 工具审批响应 |
+
+流中的 `start-step` 会聚合为持久化类型 `step-start`。保存 assistant 消息时必须原样保留
+`StepStartPart` 及整个 `parts` 列表的顺序，后续转换依靠这些标记恢复多步生成中的 reasoning、
+文本和工具调用边界。
 
 完整聚合、校验和转换规则见 [UI Message Stream](./ui-message-stream.md)。
 
@@ -1020,9 +1042,12 @@ formSchema:
 | `modelType` | 筛选 `language`、`embedding`、`rerank` 或 `image-generation` |
 | `providerName` | 筛选指定 `AiProvider.metadata.name` |
 | `providerType` | 筛选指定供应方类型 |
+| `enabled` | 按 `AiModel.spec.enabled` 筛选 |
 | `available` | 只显示可用模型，默认 `true` |
 | `requiredFeatures` | 只显示具备指定粗能力的模型 |
 | `requiredCapabilities` | 只显示满足细粒度能力要求的模型 |
+| `placeholder` | 未选择模型时的占位文本 |
+| `searchPlaceholder` | 搜索框的占位文本 |
 | `clearable` | 是否允许清空 |
 | `fullWidth` | 是否占满容器宽度 |
 
@@ -1057,14 +1082,5 @@ formSchema:
 媒体类型匹配使用覆盖语义：模型支持 `image/*` 可以匹配调用方要求的 `image/png`；
 模型只支持 `image/png` 不能匹配调用方要求的 `image/*`。列表字段也是全部满足关系。
 
-也可以在模板中直接使用：
-
-```vue
-<AiModelSelector
-  v-model="modelName"
-  name="model"
-  :model-type="activeModelType"
-  :available="availableOnly"
-  :disabled="isStreaming || isEmbeddingTesting"
-/>
-```
+`AiModelSelector` Vue 组件是 AI Foundation Console UI 的内部实现，目前没有作为公共组件导出。
+调用方插件应使用上面的 FormKit `aiModelSelector` 输入。
