@@ -1,22 +1,25 @@
 # Halo AI Foundation
 
+简体中文 | [English](./README_EN.md)
+
 Halo 官方 AI 能力平台，统一接入主流大模型，为插件生态提供文本生成、嵌入向量、工具调用等智能化能力。
 
 ![](./images/preview-providers.png)
 
 ## 功能特性
 
-- **多提供商支持**：内置 OpenAI、DeepSeek、Kimi（Moonshot）、SiliconFlow、豆包、文心一言、智谱 AI、Ollama、OpenAI-like、AIHubMix、Gitee 模力方舟、MiniMax、Xiaomi MiMo 等主流 AI 提供商
-- **统一模型管理**：通过 Halo 控制台统一管理 AI 提供商和模型配置
-- **模型自动发现**：支持从提供商自动拉取可用模型列表
-- **流式对话**：支持 SSE 流式输出，适用于实时聊天场景
-- **工具调用**：支持模型调用外部工具，适用于复杂任务编排
-- **文本嵌入**：支持文本向量化，适用于语义搜索、RAG 等场景
-- **Rerank 重排**：支持统一的 Rerank 模型配置和调用，当前内置智谱 AI、DashScope、SiliconFlow、文心一言、豆包、OpenRouter、Gitee 模力方舟和 AIHubMix 的 provider-backed 适配
-- **RAG 测试工作台**：支持在控制台用手动来源、可选 Rerank 模型和 UI Message 流验证单轮 RAG 效果
-- **默认模型设置**：支持配置系统默认的语言模型和嵌入模型
-- **模型测试 Playground**：内置测试页面，支持验证文本生成、流式输出、工具调用、结构化输出、嵌入、Rerank 和 RAG 等
-- **Java SDK**：通过 `api` 模块为其他 Halo 插件提供标准化的 AI 调用接口
+- **多提供商支持**：内置 OpenAI、OpenRouter、DeepSeek、月之暗面 Kimi、硅基流动、阿里云百炼、豆包、文心一言、智谱开放平台、Ollama、OpenAI 兼容、AIHubMix、Gitee 模力方舟、MiniMax 和 Xiaomi MiMo
+- **统一模型管理**：在 Halo 控制台管理 Provider、API Key Secret、语言 / Embedding / Rerank / 图像生成模型、Adapter 与模型能力
+- **模型自动发现**：从 Provider 拉取模型，并保留远程声明、内建能力和管理员覆盖的来源信息
+- **统一参数映射**：按 Provider 或模型配置采样、重试、推理、Embedding、Rerank 和图像参数到供应方字段的映射
+- **文本与多模态生成**：支持非流式与流式文本、图片 / 文件输入、推理内容、来源、结构化输出和多步骤结果
+- **工具调用**：支持服务端与外部工具、流式工具输入、审批、输入修复、并行工具调用和步骤控制
+- **Embedding、Rerank 与 RAG**：提供文本向量、批处理、相似度、重排和可组合的检索 / 重排 / 上下文注入 middleware
+- **图像生成**：支持文生图、图生图、蒙版编辑、多图聚合和图像 middleware
+- **UI Message Stream**：提供可持久化的消息协议、SSE 响应、消息校验 / 转换、取消和前端工具续跑
+- **默认模型设置**：分别配置语言、Embedding、Rerank 和图像生成默认模型
+- **模型测试工作台**：在控制台验证对话、Embedding、Rerank、图像生成和单轮 RAG，并查看流事件、用量、warning 与诊断信息
+- **消费方 SDK**：提供 Provider-neutral Java API、浏览器 / Vue npm 包和 FormKit `aiModelSelector`
 
 ## 已接入插件
 
@@ -94,11 +97,39 @@ cd ui && pnpm install && pnpm dev
 
 ## 其他插件集成
 
-其他 Halo 插件可以通过依赖 `api` 模块来调用本插件提供的 AI 能力，包括文本生成、流式输出、工具调用、文本嵌入和结构化输出等。
+其他 Halo 插件可以通过依赖 `api` 模块调用语言、Embedding、Rerank、图像生成、RAG 和
+UI Message 能力。
 
-本插件还提供了前端 `AiModelSelector` 组件，供其他插件在设置页中直接选择已配置的 AI 模型。
+本插件还注册了 FormKit `aiModelSelector` 输入，供其他插件在设置页中选择已配置的 AI 模型。
 
-详细集成说明请参考 [dev/dev.md](./dev/dev.md)。
+- [SDK Core](./dev/zh-CN/sdk-core/README.md)：Java 后端的文本、工具、结构化输出、Embedding、
+  Rerank、RAG、图像生成、middleware 与错误处理。
+- [SDK UI](./dev/zh-CN/sdk-ui/README.md)：Vue Chat、消息持久化、工具交互、Completion、
+  Object stream、Transport 与 UI Message 协议。
+- [插件集成示例](./dev/zh-CN/plugin-integration-examples.md)：Halo 插件依赖、后端模型调用、
+  UI Message Endpoint、Vue Chat 与模型设置。
+
+[SDK Core 单页参考](./dev/zh-CN/dev.md) 与
+[UI Message Stream 单页参考](./dev/zh-CN/ui-message-stream.md) 适合全文搜索。
+
+## AI 辅助开发
+
+仓库提供可分发的
+[`use-ai-foundation-sdk`](./skills/use-ai-foundation-sdk/SKILL.md) Skill。可以使用
+[Skills CLI](https://skills.sh/docs/cli) 安装到当前项目：
+
+```bash
+npx skills add halo-dev/plugin-ai-foundation --skill use-ai-foundation-sdk
+```
+
+也可以为 Codex 全局安装：
+
+```bash
+npx skills add halo-dev/plugin-ai-foundation --skill use-ai-foundation-sdk --global --agent codex
+```
+
+安装后通过 `$use-ai-foundation-sdk` 调用。Skill 会识别目标插件使用的 SDK 版本，优先复用
+本地已安装的 Java 或 npm 依赖；只有需要更多文档或源码上下文时才拉取对应版本的官方仓库。
 
 ## 许可证
 
