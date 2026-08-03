@@ -73,6 +73,7 @@ const testModeTabs: Tab[] = [
             <IconRefreshLine class=":uno: size-3.5" :class="{ ':uno: animate-spin': isFetching }" />
           </button>
           <button
+            v-if="mode === 'chat'"
             type="button"
             class=":uno: group size-9 inline-flex items-center justify-center border border-slate-200 rounded-lg bg-white text-slate-500 shadow-sm transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
             v-tooltip="`清空会话`"

@@ -207,6 +207,13 @@ const emit = defineEmits<{
         @update:image-max-parallel-calls="emit('update:imageMaxParallelCalls', $event)"
         @update:image-headers-text="emit('update:imageHeadersText', $event)"
       />
+
+      <div
+        v-else
+        class=":uno: border border-slate-200 rounded-lg border-dashed px-4 py-10 text-center"
+      >
+        <div class=":uno: text-xs text-slate-400">当前模式无可调参数</div>
+      </div>
     </div>
   </div>
 </template>

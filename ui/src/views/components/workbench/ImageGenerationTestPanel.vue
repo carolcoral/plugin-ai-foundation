@@ -126,7 +126,7 @@ async function handleFileChange(e: Event, target: 'input' | 'mask') {
           </div>
         </div>
 
-        <div class=":uno: grid gap-3">
+        <div class=":uno: grid content-start gap-3">
           <div class=":uno: border border-slate-200 rounded-lg bg-white shadow-sm !p-4">
             <div class=":uno: flex items-center justify-between gap-3">
               <label class=":uno: text-xs text-slate-600 font-medium">参考图</label>

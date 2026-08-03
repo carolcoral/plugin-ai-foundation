@@ -143,8 +143,8 @@ defineExpose({ focus })
           @keydown="handleKeydown"
         />
         <VButton
-          type="secondary"
-          class=":uno: absolute bottom-2 left-2 h-8 w-8 shadow-sm !rounded-md !p-0"
+          type="default"
+          class=":uno: absolute bottom-2 left-2 h-8 w-8 !rounded-md !p-0"
           :loading="isReadingFiles"
           :disabled="disabled || isStreaming"
           @click="openFilePicker"
@@ -152,7 +152,7 @@ defineExpose({ focus })
           <RiAttachment2 class=":uno: size-4" />
         </VButton>
         <div class=":uno: absolute bottom-2 right-2 flex items-end gap-3">
-          <div class=":uno: pointer-events-none text-[11px] text-slate-400">
+          <div v-if="modelValue.length" class=":uno: pointer-events-none text-[11px] text-slate-400">
             {{ modelValue.length }}
           </div>
           <VButton v-if="isStreaming" type="secondary" size="sm" @click="emit('stop')">
