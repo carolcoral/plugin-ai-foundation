@@ -297,7 +297,10 @@ function distanceToConversationBottom(element: HTMLElement) {
                   @keydown="handleEmbeddingKeydown"
                 />
                 <div class=":uno: absolute bottom-2 right-2 flex items-end gap-3">
-                  <div class=":uno: pointer-events-none text-[11px] text-slate-400">
+                  <div
+                    v-if="embeddingInputs.length"
+                    class=":uno: pointer-events-none text-[11px] text-slate-400"
+                  >
                     {{ embeddingInputs.length }}
                   </div>
                   <VButton

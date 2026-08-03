@@ -150,7 +150,7 @@ function filePreviewUrl(file: WorkbenchFileReference) {
     <div
       class=":uno: h-8 w-8 flex flex-none items-center justify-center border rounded-lg shadow-sm"
       :class="{
-        ':uno: border-slate-300 bg-slate-900 text-white': message.role === 'user',
+        ':uno: border-slate-200 bg-slate-100 text-slate-600': message.role === 'user',
         ':uno: border-teal-100 bg-white text-teal-600': message.role === 'assistant',
       }"
     >
@@ -182,7 +182,7 @@ function filePreviewUrl(file: WorkbenchFileReference) {
       <div
         class=":uno: relative overflow-hidden text-sm leading-relaxed shadow-sm"
         :class="{
-          ':uno: rounded-lg rounded-tr-sm border border-slate-800 bg-slate-950 px-3.5 py-2 text-white':
+          ':uno: rounded-lg rounded-tr-sm border border-teal-100 bg-teal-50 px-3.5 py-2 text-slate-800':
             message.role === 'user',
           ':uno: rounded-lg rounded-tl-sm border border-slate-200 bg-white px-4 py-3 text-slate-800':
             message.role === 'assistant' && message.state !== 'error',
@@ -385,11 +385,7 @@ function filePreviewUrl(file: WorkbenchFileReference) {
           <div
             v-for="file in fileReferences"
             :key="file.fileId || file.id || fileTitle(file)"
-            class=":uno: overflow-hidden border rounded-md bg-white/70 text-left"
-            :class="{
-              ':uno: border-slate-700/60 bg-white/10': message.role === 'user',
-              ':uno: border-slate-200': message.role === 'assistant',
-            }"
+            class=":uno: overflow-hidden border border-slate-200 rounded-md bg-white text-left"
           >
             <img
               v-if="filePreviewUrl(file)"
@@ -399,18 +395,14 @@ function filePreviewUrl(file: WorkbenchFileReference) {
             />
             <div class=":uno: flex items-center gap-2 px-3 py-2">
               <span
-                class=":uno: size-7 flex flex-none items-center justify-center rounded-md"
-                :class="message.role === 'user' ? ':uno: text-slate-100' : ':uno: text-slate-600'"
+                class=":uno: size-7 flex flex-none items-center justify-center rounded-md text-slate-600"
               >
                 <RiImageLine v-if="file.mediaType?.startsWith('image/')" class=":uno: size-3.5" />
                 <RiFileLine v-else class=":uno: size-3.5" />
               </span>
               <div class=":uno: min-w-0">
                 <div class=":uno: truncate text-xs font-medium">{{ fileTitle(file) }}</div>
-                <div
-                  class=":uno: truncate text-[11px]"
-                  :class="message.role === 'user' ? ':uno: text-slate-300' : ':uno: text-slate-500'"
-                >
+                <div class=":uno: truncate text-[11px] text-slate-500">
                   {{ fileSubtitle(file) }}
                 </div>
               </div>
@@ -607,23 +599,5 @@ function filePreviewUrl(file: WorkbenchFileReference) {
 
 .ai-markdown :deep(h4) {
   font-size: 0.875rem;
-}
-
-.border-slate-800.bg-slate-950 .ai-markdown :deep(a) {
-  color: #99f6e4;
-}
-
-.border-slate-800.bg-slate-950 .ai-markdown :deep(code) {
-  background: rgba(255, 255, 255, 0.12);
-  color: #f8fafc;
-}
-
-.border-slate-800.bg-slate-950 .ai-markdown :deep(pre) {
-  background: #020617;
-}
-
-.border-slate-800.bg-slate-950 .ai-markdown :deep(blockquote) {
-  border-left-color: rgba(255, 255, 255, 0.28);
-  color: #cbd5e1;
 }
 </style>

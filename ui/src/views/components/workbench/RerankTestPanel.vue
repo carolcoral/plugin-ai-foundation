@@ -2,6 +2,7 @@
 import type { TestRerankResponse } from '@/api/generated'
 import { VButton, VTag } from '@halo-dev/components'
 import RiSendPlaneLine from '~icons/ri/send-plane-line'
+import RiStackLine from '~icons/ri/stack-line'
 
 defineProps<{
   query: string
@@ -84,6 +85,19 @@ defineEmits<{
         class=":uno: border border-rose-200 rounded-lg bg-rose-50 text-sm text-rose-700 shadow-sm !px-4 !py-3"
       >
         {{ error }}
+      </div>
+
+      <div
+        v-if="!result && !error"
+        class=":uno: border border-slate-200 rounded-lg border-dashed bg-white text-center shadow-sm !px-6 !py-12"
+      >
+        <div
+          class=":uno: mx-auto mb-3 size-12 flex items-center justify-center border border-slate-200 rounded-lg bg-slate-50"
+        >
+          <RiStackLine class=":uno: size-5 text-slate-500" />
+        </div>
+        <div class=":uno: text-sm text-slate-900 font-semibold">暂无 Rerank 测试结果</div>
+        <div class=":uno: mt-1 text-xs text-slate-500">填写 Query 和 Documents 后点击 Rerank</div>
       </div>
 
       <div v-if="result" class=":uno: border border-slate-200 rounded-lg bg-white shadow-sm !p-4">
