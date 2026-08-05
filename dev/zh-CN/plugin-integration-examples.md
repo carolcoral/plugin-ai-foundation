@@ -9,31 +9,21 @@
 调用方只在编译期依赖 Java API：
 
 ```groovy
-repositories {
-    maven {
-        url = uri("https://central.sonatype.com/repository/maven-snapshots/")
-        mavenContent {
-            snapshotsOnly()
-        }
-    }
-    mavenCentral()
-}
-
 dependencies {
-    compileOnly "run.halo.aifoundation:api:1.0.0-SNAPSHOT"
+    compileOnly "run.halo.aifoundation:api:1.0.0"
 
-    testImplementation "run.halo.aifoundation:api:1.0.0-SNAPSHOT"
+    testImplementation "run.halo.aifoundation:api:1.0.0"
 }
 ```
 
-正式版本发布后应替换为对应版本。使用 `compileOnly` 可以避免把 SDK API 重复打进调用方插件。
+`1.0.0` 已发布到 Maven Central。使用 `compileOnly` 可以避免把 SDK API 重复打进调用方插件。
 
 如果插件的核心功能依赖 AI Foundation，在 `plugin.yaml` 中声明必选依赖：
 
 ```yaml
 spec:
     pluginDependencies:
-        ai-foundation: "*"
+        ai-foundation: ">=1.0.0 & <2.0.0"
 ```
 
 如果只有部分功能使用 AI Foundation，可以声明可选依赖：
@@ -41,7 +31,7 @@ spec:
 ```yaml
 spec:
     pluginDependencies:
-        ai-foundation?: "*"
+        ai-foundation?: ">=1.0.0 & <2.0.0"
 ```
 
 使用可选依赖时，调用方应根据 AI Foundation 的启用状态条件化注册相关 Bean，并在功能入口显示

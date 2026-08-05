@@ -8,12 +8,13 @@
 
 ```groovy
 dependencies {
-    compileOnly "run.halo.aifoundation:api:1.0.0-SNAPSHOT"
-    testImplementation "run.halo.aifoundation:api:1.0.0-SNAPSHOT"
+    compileOnly "run.halo.aifoundation:api:1.0.0"
+    testImplementation "run.halo.aifoundation:api:1.0.0"
 }
 ```
 
-使用 `SNAPSHOT` 时添加 Central Snapshots：
+`1.0.0` 已发布到 Maven Central，普通接入不需要额外仓库。只有测试尚未发布的 `SNAPSHOT`
+时，才添加 Central Snapshots：
 
 ```groovy
 repositories {
@@ -30,8 +31,8 @@ repositories {
 使用 `compileOnly`，不要把 API 重复打进调用方插件。AI Foundation 插件会在运行时提供相同
 类型，重复打包可能让 Halo 的插件 classloader 中出现两份不兼容的类。
 
-仓库的开发版本见根目录 `gradle.properties`。正式接入时应使用已发布版本，而不是照抄
-本页的 `SNAPSHOT`。
+仓库的开发版本见根目录 `gradle.properties`。只有明确跟踪开发快照时才使用该版本；正式
+接入使用上面的 `1.0.0`。
 
 ## 2. 声明 Halo 插件依赖
 
@@ -40,7 +41,7 @@ repositories {
 ```yaml
 spec:
     pluginDependencies:
-        ai-foundation: "*"
+        ai-foundation: ">=1.0.0 & <2.0.0"
 ```
 
 这样 Halo 会保证 AI Foundation 在调用方插件之前可用。

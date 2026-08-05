@@ -9,21 +9,24 @@ model setting.
 
 ```groovy
 dependencies {
-    compileOnly "run.halo.aifoundation:api:1.0.0-SNAPSHOT"
-    testImplementation "run.halo.aifoundation:api:1.0.0-SNAPSHOT"
+    compileOnly "run.halo.aifoundation:api:1.0.0"
+    testImplementation "run.halo.aifoundation:api:1.0.0"
 }
 ```
+
+Version `1.0.0` is available from Maven Central. Keep the SDK as `compileOnly` so the consumer
+plugin does not package a second copy of the API classes provided by AI Foundation at runtime.
 
 Required runtime dependency:
 
 ```yaml
 spec:
     pluginDependencies:
-        ai-foundation: "*"
+        ai-foundation: ">=1.0.0 & <2.0.0"
 ```
 
-Use `ai-foundation?: "*"` for an optional integration and conditionally register every bean that
-references AI Foundation types.
+Use `ai-foundation?: ">=1.0.0 & <2.0.0"` for an optional integration and conditionally register
+every bean that references AI Foundation types.
 
 ## Resolve and call a model
 

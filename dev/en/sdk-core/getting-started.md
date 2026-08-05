@@ -6,21 +6,22 @@
 
 ```groovy
 dependencies {
-    compileOnly "run.halo.aifoundation:api:1.0.0-SNAPSHOT"
-    testImplementation "run.halo.aifoundation:api:1.0.0-SNAPSHOT"
+    compileOnly "run.halo.aifoundation:api:1.0.0"
+    testImplementation "run.halo.aifoundation:api:1.0.0"
 }
 ```
 
-For snapshots, add the Central Snapshots repository. Use the released version in production.
-Keep the API as `compileOnly`: AI Foundation provides these classes at runtime, and packaging a
-second copy can create incompatible classes across Halo plugin classloaders.
+Version `1.0.0` is available from Maven Central. For an unreleased snapshot, add the Central
+Snapshots repository and use the version declared in the repository's `gradle.properties`. Keep
+the API as `compileOnly`: AI Foundation provides these classes at runtime, and packaging a second
+copy can create incompatible classes across Halo plugin classloaders.
 
 Declare the runtime plugin dependency:
 
 ```yaml
 spec:
     pluginDependencies:
-        ai-foundation: "*"
+        ai-foundation: ">=1.0.0 & <2.0.0"
 ```
 
 ## Resolve `AiModelService`

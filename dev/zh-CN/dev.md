@@ -14,10 +14,12 @@ Maven 接入即可：
 
 ```groovy
 dependencies {
-    compileOnly "run.halo.aifoundation:api:1.0.0-SNAPSHOT"
-    testImplementation "run.halo.aifoundation:api:1.0.0-SNAPSHOT"
+    compileOnly "run.halo.aifoundation:api:1.0.0"
+    testImplementation "run.halo.aifoundation:api:1.0.0"
 }
 ```
+
+`1.0.0` 已发布到 Maven Central，使用正式版本不需要配置额外仓库。
 
 如果使用 `SNAPSHOT` 版本，需要在调用方插件的仓库配置中加入 Maven Central
 Snapshots 仓库：
@@ -36,14 +38,14 @@ repositories {
 
 `main` 分支推送后会自动发布 `gradle.properties` 中的 `SNAPSHOT` 版本；
 
-推送 `v*` 标签后会发布对应的正式版本，例如 `v1.0.0` 会发布 `run.halo.aifoundation:api:1.0.0`。使用正式版本时不需要配置 Snapshots 仓库。
+推送 `v*` 标签后会发布对应的正式版本，例如 `v1.0.0` 会发布 `run.halo.aifoundation:api:1.0.0`。
 
 `plugin.yaml` 中需要添加插件依赖声明：
 
 ```yaml
 spec:
     pluginDependencies:
-        ai-foundation: "*"
+        ai-foundation: ">=1.0.0 & <2.0.0"
 ```
 
 不要使用 `implementation` 打包 API。AI Foundation 插件运行时会提供同一份 API 类型；
