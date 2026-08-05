@@ -134,9 +134,9 @@ class GiteeMoArkProviderTest {
                 + "Content-Length: " + body.getBytes(StandardCharsets.UTF_8).length + "\r\n"
                 + "\r\n"
                 + body;
+            request.complete(new RequestCapture(requestLine, authorization));
             output.write(response.getBytes(StandardCharsets.UTF_8));
             output.flush();
-            request.complete(new RequestCapture(requestLine, authorization));
         } catch (Exception e) {
             request.completeExceptionally(e);
         }
