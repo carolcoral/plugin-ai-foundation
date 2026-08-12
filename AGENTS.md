@@ -76,7 +76,7 @@ This is a **Halo CMS plugin** that provides shared AI foundation capabilities fo
 - After modifying backend code, you must restart the dev container: `docker rm halo-for-plugin-development -f && ./gradlew haloServer`
 - After changing backend API endpoints or fields, run `./gradlew generateApiClient` to regenerate the TypeScript API client. Frontend must use the generated API client — never hardcode API paths
 - For UI debugging, use Chrome MCP to visit `http://127.0.0.1:8090/console/` (admin / admin)
-- This plugin is still in development and has not been released. Do not worry about backward compatibility — if a code change brings value, just make it
+- This plugin has been released since v1.0.0. Preserve compatibility for public Java/npm SDK APIs, persisted Extension schemas, and documented behavior by default. Breaking changes require an explicit migration plan and release impact assessment.
 
 ## Conventions
 

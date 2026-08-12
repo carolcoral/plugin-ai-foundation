@@ -3,7 +3,8 @@ schema: spec-driven
 context: |
   Halo CMS plugin providing shared AI foundation capabilities for other plugins.
   Multi-module Gradle: api (published Java SDK), app (plugin impl), ui (Vue 3 console).
-  This plugin is unreleased — backward compatibility is not a concern.
+  This plugin has been released since v1.0.0. Public Java/npm SDK APIs, persisted
+  Extension schemas, and documented behavior are compatibility-sensitive.
 
   Provider type system:
   - Each provider is a single @Component class implementing AiProviderType, extending AbstractAiProviderType.
@@ -44,7 +45,8 @@ rules:
   design:
     - Preserve the distinction between providerType and provider resource name.
     - Public embedding API must not expose Spring AI types.
-    - The plugin is unreleased; do not preserve backward compatibility or add compatibility code.
+    - Preserve compatibility for public Java/npm SDK APIs, persisted Extension schemas, and documented behavior by default.
+    - For breaking changes, include an explicit migration plan and release impact assessment.
     - Treat super administrator usage/configuration as the permission boundary; do not add role-specific permission configuration for other users.
   tasks:
     - Put server-side validation before UI tasks when both exist.
