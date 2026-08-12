@@ -2,7 +2,7 @@ import type { UsageFilterState } from '@/composables/use-usage-filters'
 import { describe, expect, it } from '@rstest/core'
 import { flushPromises, mount } from '@vue/test-utils'
 import { defineComponent } from 'vue'
-import UsageFilterBar from './UsageFilterBar.vue'
+import UsageFilterBar from '../UsageFilterBar.vue'
 
 const FilterDropdownStub = defineComponent({
   props: ['modelValue', 'label', 'items'],

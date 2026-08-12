@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from '@rstest/core'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import { createMemoryHistory, createRouter } from 'vue-router'
-import { toUsageQueryParams, useUsageFilters } from './use-usage-filters'
+import { toUsageQueryParams, useUsageFilters } from '../use-usage-filters'
 
 const DAY = 24 * 60 * 60 * 1000
 const now = new Date('2026-08-11T06:00:00Z')

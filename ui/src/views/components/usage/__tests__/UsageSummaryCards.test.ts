@@ -2,7 +2,7 @@ import type { UsageSummary } from '@/api/generated'
 import { describe, expect, it, rstest } from '@rstest/core'
 import { mount } from '@vue/test-utils'
 import { defineComponent } from 'vue'
-import UsageSummaryCards from './UsageSummaryCards.vue'
+import UsageSummaryCards from '../UsageSummaryCards.vue'
 
 rstest.mock('@halo-dev/components', () => ({
   VLoading: defineComponent({

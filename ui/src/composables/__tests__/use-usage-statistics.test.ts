@@ -6,7 +6,7 @@ import { computed, defineComponent, h } from 'vue'
 import {
   reloadUsageQueries,
   useUsageCalls,
-} from './use-usage-statistics'
+} from '../use-usage-statistics'
 
 rstest.mock('@/api', () => ({
   aiConsoleApiClient: {

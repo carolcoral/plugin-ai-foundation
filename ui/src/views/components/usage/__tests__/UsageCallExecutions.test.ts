@@ -3,7 +3,7 @@ import { useUsageCallDetail } from '@/composables/use-usage-statistics'
 import { beforeEach, describe, expect, it, rstest } from '@rstest/core'
 import { mount } from '@vue/test-utils'
 import { defineComponent, ref } from 'vue'
-import UsageCallExecutions from './UsageCallExecutions.vue'
+import UsageCallExecutions from '../UsageCallExecutions.vue'
 
 rstest.mock('@/composables/use-usage-statistics', () => ({
   useUsageCallDetail: rstest.fn(),

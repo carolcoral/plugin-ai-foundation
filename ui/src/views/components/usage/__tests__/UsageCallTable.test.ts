@@ -2,7 +2,7 @@ import type { UsageCallItem } from '@/api/generated'
 import { describe, expect, it, rstest } from '@rstest/core'
 import { flushPromises, mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
-import UsageCallTable from './UsageCallTable.vue'
+import UsageCallTable from '../UsageCallTable.vue'
 
 rstest.mock('@halo-dev/components', () => ({
   VLoading: defineComponent({

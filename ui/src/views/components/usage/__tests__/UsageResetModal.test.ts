@@ -2,7 +2,7 @@ import { aiConsoleApiClient } from '@/api'
 import { describe, expect, it, rstest } from '@rstest/core'
 import { flushPromises, mount } from '@vue/test-utils'
 import { defineComponent, h, ref, type PropType } from 'vue'
-import UsageResetModal from './UsageResetModal.vue'
+import UsageResetModal from '../UsageResetModal.vue'
 
 const invalidateQueries = rstest.fn()
 

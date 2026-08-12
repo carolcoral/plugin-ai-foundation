@@ -13,7 +13,7 @@ import {
   usageStatusTagTheme,
   usageStatusLabel,
   usageUnitKindLabel,
-} from './usage'
+} from '../usage'
 
 describe('usage utils', () => {
   it('renders null token fields as 未知 instead of zero', () => {

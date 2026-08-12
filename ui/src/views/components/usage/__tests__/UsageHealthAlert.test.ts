@@ -2,7 +2,7 @@ import type { UsageHealth } from '@/api/generated'
 import { describe, expect, it, rstest } from '@rstest/core'
 import { mount } from '@vue/test-utils'
 import { defineComponent } from 'vue'
-import UsageHealthAlert from './UsageHealthAlert.vue'
+import UsageHealthAlert from '../UsageHealthAlert.vue'
 
 rstest.mock('@halo-dev/components', () => ({
   VAlert: defineComponent({

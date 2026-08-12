@@ -2,7 +2,7 @@ import type { UsageTrendPoint } from '@/api/generated'
 import { describe, expect, it, rstest } from '@rstest/core'
 import { mount } from '@vue/test-utils'
 import { defineComponent } from 'vue'
-import UsageTrendChart from './UsageTrendChart.vue'
+import UsageTrendChart from '../UsageTrendChart.vue'
 import type { UsageTrendResolution } from '@/utils/usage'
 
 rstest.mock('@halo-dev/components', () => ({
