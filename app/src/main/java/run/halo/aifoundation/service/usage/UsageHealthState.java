@@ -8,11 +8,12 @@ public record UsageHealthState(
     long writeFailures,
     Instant lastWriteErrorAt,
     Instant affectedSince,
+    Instant affectedUntil,
     String migrationError,
     String integrityError
 ) {
 
     public static UsageHealthState empty() {
-        return new UsageHealthState(0, 0, 0, null, null, null, null);
+        return new UsageHealthState(0, 0, 0, null, null, null, null, null);
     }
 }

@@ -50,7 +50,7 @@
 
 ## 7. Backup and Recovery
 
-- [x] 7.1 Integrate SQLite Online Backup or an equivalent consistent snapshot with the verified Halo backup/restore extension point.
+- [x] 7.1 Publish validated SQLite-consistent snapshots inside the plugin work directory so Halo full-site backup includes recoverable plugin state; document that Halo 2.25 has no backend plugin backup hook.
 - [x] 7.2 Validate restored schema version and integrity before enabling statistics access.
 - [x] 7.3 Preserve or quarantine a damaged database and disable only statistics when migration or integrity validation fails; never silently create an empty healthy replacement.
 - [x] 7.4 Add end-to-end backup, restore, migration-failure, corrupt-database, WAL-state, and recovery-health tests.
@@ -79,3 +79,14 @@
 - [x] 10.4 Verify enqueue p95 at or below 1 ms, common list p95 at or below 200 ms, and 90-day aggregate p95 at or below 500 ms, or record and resolve the failed acceptance criterion.
 - [x] 10.5 Run backend tests, frontend lint/type checks/tests, packaged-JAR SQLite verification, repeated Halo reload, abrupt-stop recovery, and the full Gradle build.
 - [x] 10.6 Update administrator and consumer documentation for metric definitions, coverage, privacy, retention, feature metadata, historical resolution, backup, reset, health, and single-instance limitations.
+
+## 11. Review Remediation
+
+- [x] 11.1 Preserve execution usage for provider attempts that cross UTC day boundaries and add a retention regression test.
+- [x] 11.2 Execute aggregate reads against one SQLite snapshot and add concurrent-write consistency coverage.
+- [x] 11.3 Start execution telemetry only at the actual provider invocation boundary and cover pre-invocation cancellation.
+- [x] 11.4 Persist the full affected interval and compute aggregate completeness for the requested time range.
+- [x] 11.5 Verify and document the Halo backup/restore integration boundary instead of claiming an unverified extension point.
+- [x] 11.6 Check in the required 1M-call/5M-execution benchmark harness, report, query plans, and operator documentation.
+- [x] 11.7 Remove unused APIs and return values, centralize operation/feature domains, and split SQLite query and maintenance responsibilities.
+- [x] 11.8 Regenerate clients, run backend and frontend verification, and perform a final diff review.

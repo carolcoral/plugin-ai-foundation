@@ -37,8 +37,6 @@ public interface UsageStatisticsStore extends AutoCloseable {
 
     void backup();
 
-    String quickCheck();
-
     @Override
     void close();
 }

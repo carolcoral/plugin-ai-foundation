@@ -165,19 +165,20 @@ public class ImageGenerationModelImpl implements ImageGenerationModel {
     }
 
     private Mono<GenerateImageResult> invokeBatch(GenerateImageRequest request, int batchIndex) {
-        Supplier<Mono<GenerateImageResult>> invocation = () -> parameterMappings.isEmpty()
-            ? client.generateImage(request)
-            : client.generateImage(request, mappingTarget(request));
-        var call = (usageExecutionObserver == null ? invocation.get()
-            : usageExecutionObserver.observe(UsageUnitKind.IMAGE_BATCH, batchIndex, invocation,
-                result -> NormalizedUsage.from(result.getUsage()), this::responseModel))
-            .doOnSubscribe(ignored -> checkCancellation(request))
-            .doOnNext(ignored -> checkCancellation(request));
+        var call = Mono.defer(() -> {
+            checkCancellation(request);
+            Supplier<Mono<GenerateImageResult>> invocation = () -> parameterMappings.isEmpty()
+                ? client.generateImage(request)
+                : client.generateImage(request, mappingTarget(request));
+            var observed = (usageExecutionObserver == null ? invocation.get()
+                : usageExecutionObserver.observe(UsageUnitKind.IMAGE_BATCH, batchIndex, invocation,
+                    result -> NormalizedUsage.from(result.getUsage()), this::responseModel))
+                .doOnNext(ignored -> checkCancellation(request));
+            return observed;
+        });
         var maxRetries = maxRetries(request);
-        if (maxRetries <= 0) {
-            return call;
-        }
-        return call.retryWhen(Retry.max(maxRetries).filter(this::isRetryable));
+        return maxRetries <= 0 ? call
+            : call.retryWhen(Retry.max(maxRetries).filter(this::isRetryable));
     }
 
     private String responseModel(GenerateImageResult result) {

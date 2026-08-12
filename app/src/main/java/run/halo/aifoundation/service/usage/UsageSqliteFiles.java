@@ -74,16 +74,15 @@ final class UsageSqliteFiles {
         }
     }
 
-    static boolean recoverIfRequired(UsageDatabasePaths paths) {
+    static Recovery recoverIfRequired(UsageDatabasePaths paths) {
         var live = paths.database();
         var backups = listBackups(paths);
         if (Files.exists(live) && isUsableLiveDatabase(live)) {
-            return false;
+            return Recovery.none();
         }
         if (!hasStorageEvidence(live) && backups.isEmpty()) {
-            return false;
+            return Recovery.none();
         }
-        var invalidLive = hasStorageEvidence(live);
         var selected = backups.reversed().stream()
             .filter(UsageSqliteFiles::isValidSnapshot)
             .findFirst();
@@ -105,7 +104,7 @@ final class UsageSqliteFiles {
             Files.deleteIfExists(sidecar(live, "-shm"));
             move(temporary, live, true);
             log.info("Restored AI usage SQLite database {} from {}", live, selected.get());
-            return invalidLive;
+            return new Recovery(true, backupCreatedAt(selected.get()));
         } catch (IOException error) {
             throw new IllegalStateException("Failed to restore SQLite statistics database", error);
         } finally {
@@ -114,6 +113,32 @@ final class UsageSqliteFiles {
             } catch (IOException error) {
                 log.warn("Failed to delete SQLite restore temporary file {}", temporary, error);
             }
+        }
+    }
+
+    private static Instant backupCreatedAt(Path backup) {
+        var name = backup.getFileName().toString();
+        var marker = ".bak-";
+        var timestampStart = name.lastIndexOf(marker);
+        if (timestampStart >= 0) {
+            try {
+                return Instant.from(TIMESTAMP.parse(name.substring(timestampStart
+                    + marker.length())));
+            } catch (RuntimeException ignored) {
+                // Fall through to the filesystem timestamp for an older backup name.
+            }
+        }
+        try {
+            return Files.getLastModifiedTime(backup, LinkOption.NOFOLLOW_LINKS).toInstant();
+        } catch (IOException error) {
+            throw new IllegalStateException("Failed to read SQLite backup timestamp", error);
+        }
+    }
+
+    record Recovery(boolean restored, Instant snapshotAt) {
+
+        private static Recovery none() {
+            return new Recovery(false, null);
         }
     }
 

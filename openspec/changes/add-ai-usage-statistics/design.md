@@ -146,6 +146,8 @@ The Vue Console uses the generated OpenAPI client and Chinese copy. The primary 
 
 WAL databases are backed up through SQLite Online Backup or an equivalent consistent snapshot, not by copying only the main file. Validated timestamped snapshots live beside the plugin database under `backups/`, retain the newest two, and request a passive checkpoint after publication. Startup may restore the newest valid snapshot only after preserving an invalid live database and its sidecars under `backups/corrupted/`.
 
+Halo 2.25 has no backend extension point that lets a plugin participate atomically in a full-site backup; `backup:tabs:create` extends only the Console UI. The core backup copies the Halo work directory, including the plugin directory, so the plugin-owned validated snapshots are included as ordinary files. Recovery therefore treats those snapshots, rather than an uncoordinated copy of the live WAL database alone, as the portable restore source.
+
 Schema migration first obtains a recoverable snapshot. If migration or integrity validation fails without a validated recovery candidate, preserve or quarantine the original database, disable statistics, and expose health details while model services continue. Never silently replace failed history with an empty healthy database.
 
 ### 13. Prove indexes and limits at target scale
@@ -180,7 +182,7 @@ Rollback disables statistics endpoints and event admission before reverting appl
 
 There are no unresolved product decisions. Implementation must validate these technical facts before declaring the change complete:
 
-- The exact Halo work-directory path and backup extension point for plugin-owned SQLite state.
+- Whether a future Halo release adds a backend backup hook that can request a fresh plugin snapshot before packaging the work directory.
 - The stream-result ownership mechanism needed to share one call session across every projection.
 - The complete set of provider-attempt interception points and which failed paths can return usage.
 - Queue capacity, busy timeout, read-pool size, checkpoint cadence, and any incremental-vacuum policy from benchmark evidence.

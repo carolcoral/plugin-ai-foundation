@@ -102,7 +102,7 @@ class UsageStatisticsConsoleEndpointTest {
     void returnsNotFoundAndHealth() {
         when(service.getCall("missing")).thenReturn(Mono.just(Optional.empty()));
         when(service.health()).thenReturn(new UsageHealth(true, true, 0, 0, 0, 0,
-            null, null, null, null));
+            null, null, null, null, null));
 
         client.get().uri("/usage-statistics/calls/missing")
             .exchange().expectStatus().isNotFound();

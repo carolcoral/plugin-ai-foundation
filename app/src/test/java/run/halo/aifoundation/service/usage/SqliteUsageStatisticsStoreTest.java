@@ -5,9 +5,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -69,6 +74,25 @@ class SqliteUsageStatisticsStoreTest {
     }
 
     @Test
+    void aggregateReadsUseOneSnapshotDuringConcurrentWrite() throws Exception {
+        var queries = new SnapshotBarrierQueryRepository();
+        store = new SqliteUsageStatisticsStore(
+            new UsageDatabasePaths(temporaryDirectory.resolve("plugins")),
+            new UsageStatisticsMaintenance(), queries);
+        store.initialize();
+        store.startCall(start("before-snapshot", Instant.parse("2026-08-10T10:00:00Z")));
+        var range = query("2026-08-10T00:00:00Z", "2026-08-11T00:00:00Z");
+
+        var summary = CompletableFuture.supplyAsync(() -> store.summary(range, true));
+        assertThat(queries.snapshotStarted.await(5, TimeUnit.SECONDS)).isTrue();
+        store.startCall(start("after-snapshot", Instant.parse("2026-08-10T11:00:00Z")));
+        queries.writeCompleted.countDown();
+
+        assertThat(summary.get(5, TimeUnit.SECONDS).callCount()).isEqualTo(1);
+        assertThat(store.summary(range, true).callCount()).isEqualTo(2);
+    }
+
+    @Test
     void tokenStatusFilterUsesExecutionOutcomeAcrossSuccessfulRetry() {
         store = createStore();
         var start = start("retried", Instant.parse("2026-08-10T10:00:00Z"));
@@ -123,6 +147,32 @@ class SqliteUsageStatisticsStoreTest {
         store.rollupAndRetain(
             Clock.fixed(Instant.parse("2026-08-02T00:00:00Z"), ZoneOffset.UTC));
         assertThat(store.summary(failedQuery, true).accountedTotalTokens()).isEqualTo(10L);
+    }
+
+    @Test
+    void retainsUsageFromExecutionThatStartedOnDayAfterLogicalCall() {
+        store = createStore();
+        var start = start("cross-day", Instant.parse("2026-07-01T23:59:59Z"));
+        store.startCall(start);
+        var executionStart = Instant.parse("2026-07-02T00:00:01Z");
+        store.recordExecution(new UsageExecutionRecord("cross-day-execution", start.id(),
+            start.epoch(), UsageUnitKind.GENERATION_STEP, 0, 0, executionStart,
+            executionStart.plusMillis(10), UsageStatus.SUCCEEDED, null,
+            start.requestModelId(), "actual", usage(10, 5)));
+        store.finishCall(new UsageCallTerminal(start, executionStart.plusMillis(10),
+            UsageStatus.SUCCEEDED, null, "actual", 1, 1, 0, true, usage(10, 5)));
+        var executionDay = query("2026-07-02T00:00:00Z", "2026-07-03T00:00:00Z");
+
+        store.rollupAndRetain(
+            Clock.fixed(Instant.parse("2026-08-02T02:00:00Z"), ZoneOffset.UTC));
+
+        var summary = store.summary(executionDay, true);
+        assertThat(summary.callCount()).isZero();
+        assertThat(summary.accountedTotalTokens()).isEqualTo(15L);
+
+        store.rollupAndRetain(
+            Clock.fixed(Instant.parse("2026-08-03T02:00:00Z"), ZoneOffset.UTC));
+        assertThat(store.summary(executionDay, true).accountedTotalTokens()).isEqualTo(15L);
     }
 
     @Test
@@ -276,13 +326,14 @@ class SqliteUsageStatisticsStoreTest {
         store.initialize();
         var affected = Instant.parse("2026-08-10T10:00:00Z");
         var lastError = Instant.parse("2026-08-10T10:01:00Z");
-        store.writeHealth(new UsageHealthState(3, 2, 1, lastError, affected, null, null));
+        store.writeHealth(new UsageHealthState(3, 2, 1, lastError, affected, lastError,
+            null, null));
         store.close();
         store = new SqliteUsageStatisticsStore(paths);
         store.initialize();
 
         assertThat(store.readHealth()).isEqualTo(
-            new UsageHealthState(3, 2, 1, lastError, affected, null, null));
+            new UsageHealthState(3, 2, 1, lastError, affected, lastError, null, null));
 
         store.reset();
         assertThat(store.readHealth()).isEqualTo(UsageHealthState.empty());
@@ -308,6 +359,10 @@ class SqliteUsageStatisticsStoreTest {
 
         assertThat(store.getCall(start.id())).isPresent();
         assertThat(store.quickCheck()).isEqualTo("ok");
+        assertThat(store.readHealth().integrityError())
+            .isEqualTo("RECOVERED_FROM_SNAPSHOT");
+        assertThat(store.readHealth().affectedSince()).isNotNull();
+        assertThat(store.readHealth().affectedUntil()).isNotNull();
     }
 
     @Test
@@ -327,7 +382,9 @@ class SqliteUsageStatisticsStoreTest {
 
         assertThat(store.getCall(start.id())).isPresent();
         assertThat(store.readHealth().integrityError())
-            .isEqualTo("RECOVERED_FROM_INVALID_DATABASE");
+            .isEqualTo("RECOVERED_FROM_SNAPSHOT");
+        assertThat(store.readHealth().affectedSince()).isBefore(
+            store.readHealth().affectedUntil());
         try (var files = Files.list(paths.backupDirectory().resolve("corrupted"))) {
             var evidence = files.filter(Files::isRegularFile).toList();
             assertThat(evidence).hasSize(1);
@@ -380,7 +437,7 @@ class SqliteUsageStatisticsStoreTest {
             var rows = connection.createStatement().executeQuery(
                 "SELECT value FROM ai_statistics_meta WHERE key = 'schema_version'")) {
             assertThat(rows.next()).isTrue();
-            assertThat(rows.getString(1)).isEqualTo("3");
+            assertThat(rows.getString(1)).isEqualTo("4");
         }
         try (var files = Files.list(paths.backupDirectory().resolve("corrupted"))) {
             assertThat(files.filter(Files::isRegularFile).toList()).hasSize(1);
@@ -514,7 +571,7 @@ class SqliteUsageStatisticsStoreTest {
             var rows = connection.createStatement().executeQuery(
                 "SELECT value FROM ai_statistics_meta WHERE key = 'schema_version'")) {
             assertThat(rows.next()).isTrue();
-            assertThat(rows.getString(1)).isEqualTo("3");
+            assertThat(rows.getString(1)).isEqualTo("4");
         }
     }
 
@@ -618,5 +675,31 @@ class SqliteUsageStatisticsStoreTest {
         return new UsageQuery(query.from(), query.to(), query.callerPlugin(), query.feature(),
             query.providerName(), query.modelName(), query.modelType(), query.operation(), status,
             query.usageQuality(), query.resolution());
+    }
+
+    private static final class SnapshotBarrierQueryRepository
+        extends UsageStatisticsQueryRepository {
+
+        private final CountDownLatch snapshotStarted = new CountDownLatch(1);
+        private final CountDownLatch writeCompleted = new CountDownLatch(1);
+
+        @Override
+        UsageSummary summary(Connection connection, UsageQuery query, boolean complete)
+            throws SQLException {
+            try (var statement = connection.createStatement();
+                var ignored = statement.executeQuery("SELECT COUNT(*) FROM ai_calls")) {
+                ignored.next();
+            }
+            snapshotStarted.countDown();
+            try {
+                if (!writeCompleted.await(5, TimeUnit.SECONDS)) {
+                    throw new SQLException("Timed out waiting for concurrent write");
+                }
+            } catch (InterruptedException error) {
+                Thread.currentThread().interrupt();
+                throw new SQLException("Interrupted while waiting for concurrent write", error);
+            }
+            return super.summary(connection, query, complete);
+        }
     }
 }

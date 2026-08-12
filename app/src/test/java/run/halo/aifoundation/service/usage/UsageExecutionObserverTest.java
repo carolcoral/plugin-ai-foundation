@@ -65,6 +65,22 @@ class UsageExecutionObserverTest {
     }
 
     @Test
+    void missingProviderUsageDoesNotMakePersistedTelemetryIncomplete() {
+        var service = mock(UsageStatisticsService.class);
+        var session = session(service);
+
+        session.beginExecution(UsageUnitKind.RERANK, 0)
+            .succeed(NormalizedUsage.missing(), null);
+        session.succeed(NormalizedUsage.missing(), null, 1);
+
+        var terminal = ArgumentCaptor.forClass(UsageCallTerminal.class);
+        verify(service).finishCall(org.mockito.ArgumentMatchers.any(), terminal.capture());
+        assertThat(terminal.getValue().complete()).isTrue();
+        assertThat(terminal.getValue().missingExecutionCount()).isEqualTo(1);
+        assertThat(terminal.getValue().usage().quality()).isEqualTo(UsageQuality.MISSING);
+    }
+
+    @Test
     void monoExtractorFailureDoesNotFailModelResult() {
         var service = mock(UsageStatisticsService.class);
         var session = session(service);

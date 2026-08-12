@@ -6,7 +6,7 @@ import java.sql.Statement;
 
 final class UsageSqliteSchema {
 
-    static final int VERSION = 3;
+    static final int VERSION = 4;
 
     private UsageSqliteSchema() {
     }
@@ -41,6 +41,10 @@ final class UsageSqliteSchema {
             if (version < 3) {
                 createVersionThree(statement);
                 putMeta(connection, "schema_version", "3");
+            }
+            if (version < 4) {
+                createVersionFour(statement);
+                putMeta(connection, "schema_version", "4");
             }
             statement.execute("PRAGMA user_version = " + VERSION);
             connection.commit();
@@ -96,6 +100,16 @@ final class UsageSqliteSchema {
         statement.execute("""
             CREATE INDEX idx_executions_started
             ON ai_model_executions(started_at_ms)
+            """);
+    }
+
+    private static void createVersionFour(Statement statement) throws SQLException {
+        statement.execute(
+            "ALTER TABLE ai_statistics_health ADD COLUMN affected_until_ms INTEGER");
+        statement.execute("""
+            UPDATE ai_statistics_health
+            SET affected_until_ms = affected_since_ms
+            WHERE affected_since_ms IS NOT NULL
             """);
     }
 
@@ -191,7 +205,8 @@ final class UsageSqliteSchema {
         validateColumns(connection, "ai_usage_daily",
             "day", "status", "usage_quality", "call_count", "accounted_total_tokens");
         validateColumns(connection, "ai_statistics_health",
-            "id", "dropped_events", "incomplete_calls", "write_failures");
+            "id", "dropped_events", "incomplete_calls", "write_failures",
+            "affected_since_ms", "affected_until_ms");
         validateColumns(connection, "ai_token_usage_daily",
             "day", "status", "usage_quality", "fact_count", "accounted_total_tokens");
     }

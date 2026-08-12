@@ -243,21 +243,20 @@ public class EmbeddingModelImpl implements EmbeddingModel {
     private Mono<EmbeddingBatchResult> batchCall(EmbeddingRequest request,
         EmbeddingBatchPlanner.IndexedBatch batch,
         EmbeddingOptions options) {
-        Supplier<Mono<EmbeddingBatchResult>> invocation = () -> Mono.fromCallable(() -> {
-                checkCancellation(request);
-                return embedBatch(request, batch, options);
-            })
-            .subscribeOn(Schedulers.boundedElastic())
-            .transform(mono -> withEmbeddingTimeout(mono, request));
-        var call = usageExecutionObserver == null ? invocation.get()
-            : usageExecutionObserver.observe(UsageUnitKind.EMBEDDING_BATCH, batch.index(),
-                invocation, this::batchUsage, this::batchModel);
-
+        var call = Mono.defer(() -> {
+            checkCancellation(request);
+            Supplier<Mono<EmbeddingBatchResult>> invocation = () -> Mono.fromCallable(
+                    () -> embedBatch(request, batch, options))
+                .subscribeOn(Schedulers.boundedElastic())
+                .transform(mono -> withEmbeddingTimeout(mono, request));
+            var observed = usageExecutionObserver == null ? invocation.get()
+                : usageExecutionObserver.observe(UsageUnitKind.EMBEDDING_BATCH, batch.index(),
+                    invocation, this::batchUsage, this::batchModel);
+            return observed;
+        });
         var maxRetries = batchPlanner.maxRetries(request);
-        if (maxRetries <= 0) {
-            return call;
-        }
-        return call.retryWhen(Retry.max(maxRetries).filter(this::isRetryable));
+        return maxRetries <= 0 ? call
+            : call.retryWhen(Retry.max(maxRetries).filter(this::isRetryable));
     }
 
     private NormalizedUsage batchUsage(EmbeddingBatchResult result) {

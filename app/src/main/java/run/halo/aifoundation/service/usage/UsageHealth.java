@@ -11,6 +11,7 @@ public record UsageHealth(
     long writeFailures,
     Instant lastWriteErrorAt,
     Instant affectedSince,
+    Instant affectedUntil,
     String migrationError,
     String integrityError
 ) {

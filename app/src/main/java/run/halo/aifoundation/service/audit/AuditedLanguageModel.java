@@ -16,11 +16,15 @@ import run.halo.aifoundation.chat.middleware.LanguageModelMiddlewares;
 import run.halo.aifoundation.service.usage.NormalizedUsage;
 import run.halo.aifoundation.service.usage.UsageCallDescriptor;
 import run.halo.aifoundation.service.usage.UsageCallSession;
+import run.halo.aifoundation.service.usage.UsageOperation;
 import run.halo.aifoundation.service.usage.UsageStatisticsService;
 import run.halo.aifoundation.service.usage.UsageTelemetry;
 import run.halo.aifoundation.schema.OutputType;
 
 public class AuditedLanguageModel implements LanguageModel {
+
+    private static final String GENERATE_TEXT = UsageOperation.LANGUAGE_GENERATE_TEXT.value();
+    private static final String STREAM_TEXT = UsageOperation.LANGUAGE_STREAM_TEXT.value();
 
     private final LanguageModel delegate;
     private final ModelCallContext context;
@@ -39,22 +43,22 @@ public class AuditedLanguageModel implements LanguageModel {
 
     @Override
     public Mono<GenerateTextResult> generateText(String prompt) {
-        auditRecorder.recordModelInvocation(context, "language.generateText");
-        return recordMono("language.generateText", null, () -> delegate.generateText(prompt));
+        auditRecorder.recordModelInvocation(context, GENERATE_TEXT);
+        return recordMono(GENERATE_TEXT, null, () -> delegate.generateText(prompt));
     }
 
     @Override
     public Mono<GenerateTextResult> generateText(GenerateTextRequest request) {
-        auditRecorder.recordModelInvocation(context, "language.generateText");
-        return recordMono("language.generateText", request.getMetadata(),
+        auditRecorder.recordModelInvocation(context, GENERATE_TEXT);
+        return recordMono(GENERATE_TEXT, request.getMetadata(),
             () -> LanguageModelMiddlewares.applyRequestMiddleware(delegate, request));
     }
 
     @Override
     public StreamTextResult streamText(GenerateTextRequest request) {
-        auditRecorder.recordModelInvocation(context, "language.streamText");
+        auditRecorder.recordModelInvocation(context, STREAM_TEXT);
         var result = LanguageModelMiddlewares.applyRequestStreamMiddleware(delegate, request);
-        var descriptor = usageStatistics.describeCall(context, "language.streamText", true,
+        var descriptor = usageStatistics.describeCall(context, STREAM_TEXT, true,
             request.getMetadata());
         var lazy = new LazySession(usageStatistics, descriptor);
         var outputType = request.getOutput() == null ? null : request.getOutput().getType();

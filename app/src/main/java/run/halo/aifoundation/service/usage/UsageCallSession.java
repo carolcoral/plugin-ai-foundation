@@ -110,7 +110,7 @@ public final class UsageCallSession {
         if (!terminal.compareAndSet(false, true)) {
             return;
         }
-        var complete = !incomplete.get() && missingExecutions.get() == 0;
+        var complete = !incomplete.get();
         var executionUsage = NormalizedUsage.sum(executionUsages);
         var resolvedUsage = attempts.get() > 0 && executionUsage.quality() != UsageQuality.MISSING
             ? executionUsage : usage;

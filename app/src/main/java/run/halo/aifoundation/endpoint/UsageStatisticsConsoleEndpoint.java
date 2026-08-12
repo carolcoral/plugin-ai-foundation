@@ -21,6 +21,7 @@ import reactor.core.publisher.Mono;
 import run.halo.aifoundation.service.usage.UsageCallDetail;
 import run.halo.aifoundation.service.usage.UsageCallPage;
 import run.halo.aifoundation.service.usage.UsageHealth;
+import run.halo.aifoundation.service.usage.UsageFeature;
 import run.halo.aifoundation.service.usage.UsageQuality;
 import run.halo.aifoundation.service.usage.UsageQuery;
 import run.halo.aifoundation.service.usage.UsageStatisticsService;
@@ -39,7 +40,6 @@ public class UsageStatisticsConsoleEndpoint implements CustomEndpoint {
     private static final Duration MAX_RANGE = Duration.ofDays(3660);
     private static final int DEFAULT_PAGE_SIZE = 50;
     private static final int MAX_PAGE_SIZE = 200;
-    private static final String FEATURE_PATTERN = "[a-z0-9._-]{1,64}";
     private final UsageStatisticsService service;
 
     @Override
@@ -147,8 +147,8 @@ public class UsageStatisticsConsoleEndpoint implements CustomEndpoint {
                 throw new IllegalArgumentException("date range must not exceed 3660 days");
             }
             var feature = text(request, "feature");
-            if (feature != null && !feature.matches(FEATURE_PATTERN)) {
-                throw new IllegalArgumentException("feature must match " + FEATURE_PATTERN);
+            if (feature != null && !UsageFeature.isValid(feature)) {
+                throw new IllegalArgumentException("feature must match " + UsageFeature.FORMAT);
             }
             return new UsageQuery(from, to, text(request, "callerPlugin"),
                 feature, text(request, "providerName"),

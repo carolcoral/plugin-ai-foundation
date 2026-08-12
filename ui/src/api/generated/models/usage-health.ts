@@ -28,6 +28,12 @@ export interface UsageHealth {
     'affectedSince'?: string;
     /**
      * 
+     * @type {string}
+     * @memberof UsageHealth
+     */
+    'affectedUntil'?: string;
+    /**
+     * 
      * @type {boolean}
      * @memberof UsageHealth
      */

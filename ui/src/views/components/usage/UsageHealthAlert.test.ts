@@ -40,6 +40,7 @@ describe('UsageHealthAlert', () => {
       writeFailures: 2,
       queueDepth: 40,
       affectedSince: '2026-08-10T00:00:00Z',
+      affectedUntil: '2026-08-10T00:30:00Z',
       lastWriteErrorAt: '2026-08-10T12:00:00Z',
     })
     const text = wrapper.text()
@@ -49,6 +50,7 @@ describe('UsageHealthAlert', () => {
     expect(text).toContain('写入失败 2 次')
     expect(text).toContain('当前队列积压 40 条')
     expect(text).toContain('影响起始时间')
+    expect(text).toContain('影响结束时间')
     expect(text).toContain('最近写入错误')
   })
 

@@ -5,7 +5,7 @@
     "version" : "2.25.4"
   },
   "servers" : [ {
-    "url" : "http://localhost:32792",
+    "url" : "/",
     "description" : "Generated server url"
   } ],
   "security" : [ {
@@ -4075,6 +4075,10 @@
         "type" : "object",
         "properties" : {
           "affectedSince" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "affectedUntil" : {
             "type" : "string",
             "format" : "date-time"
           },

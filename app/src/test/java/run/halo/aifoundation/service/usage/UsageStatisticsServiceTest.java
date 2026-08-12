@@ -12,6 +12,7 @@ import static org.mockito.ArgumentMatchers.any;
 
 import java.util.Map;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -172,7 +173,7 @@ class UsageStatisticsServiceTest {
         when(store.currentEpoch()).thenReturn(1L);
         var affected = java.time.Instant.parse("2026-08-10T10:00:00Z");
         when(store.readHealth()).thenReturn(new UsageHealthState(3, 2, 1, affected, affected,
-            null, null));
+            affected, null, null));
         service = new UsageStatisticsService(store, callerResolver());
 
         service.initialize();
@@ -182,13 +183,37 @@ class UsageStatisticsServiceTest {
         assertThat(service.health().writeFailures()).isEqualTo(1);
         assertThat(service.health().complete()).isFalse();
         assertThat(service.health().affectedSince()).isEqualTo(affected);
+        assertThat(service.health().affectedUntil()).isEqualTo(affected);
+    }
+
+    @Test
+    void marksOnlyQueriesThatIntersectPersistedAffectedIntervalIncomplete() {
+        var store = mock(UsageStatisticsStore.class);
+        when(store.currentEpoch()).thenReturn(1L);
+        var since = Instant.parse("2026-08-10T10:00:00Z");
+        var until = Instant.parse("2026-08-10T11:00:00Z");
+        when(store.readHealth()).thenReturn(
+            new UsageHealthState(1, 0, 0, null, since, until, null, null));
+        service = new UsageStatisticsService(store, callerResolver());
+        service.initialize();
+        var before = query("2026-08-10T08:00:00Z", "2026-08-10T10:00:00Z");
+        var overlapping = query("2026-08-10T09:00:00Z", "2026-08-10T10:30:00Z");
+        var after = query("2026-08-10T11:00:01Z", "2026-08-10T12:00:00Z");
+
+        service.summary(before).block();
+        service.summary(overlapping).block();
+        service.summary(after).block();
+
+        verify(store).summary(before, true);
+        verify(store).summary(overlapping, false);
+        verify(store).summary(after, true);
     }
 
     @Test
     void resetClearsPersistedAndInMemoryRecoveryErrors() {
         var store = mock(UsageStatisticsStore.class);
         when(store.currentEpoch()).thenReturn(1L);
-        when(store.readHealth()).thenReturn(new UsageHealthState(0, 0, 0, null, null,
+        when(store.readHealth()).thenReturn(new UsageHealthState(0, 0, 0, null, null, null,
             "migration failed", "recovered from corrupt database"));
         when(store.reset()).thenReturn(2L);
         service = new UsageStatisticsService(store, callerResolver());
@@ -255,6 +280,11 @@ class UsageStatisticsServiceTest {
             "provider", "openai", "gpt"), "language.generateText", false, null,
             CallerPluginInfo.builder().pluginName("plugin").version("1")
                 .detectionSource("stack").build());
+    }
+
+    private static UsageQuery query(String from, String to) {
+        return new UsageQuery(Instant.parse(from), Instant.parse(to), null, null, null, null,
+            null, null, null, null, null);
     }
 
     private static void await(java.util.function.BooleanSupplier condition) throws Exception {

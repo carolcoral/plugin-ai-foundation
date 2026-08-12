@@ -26,7 +26,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import run.halo.aifoundation.service.audit.CallerPluginInfo;
 import run.halo.aifoundation.service.audit.CallerPluginResolver;
 import run.halo.aifoundation.service.audit.ModelCallContext;
 
@@ -37,9 +36,6 @@ public class UsageStatisticsService {
     static final int WRITE_QUEUE_CAPACITY = 8_192;
     static final int MAX_WRITE_ATTEMPTS = 3;
     private static final Duration SHUTDOWN_TIMEOUT = Duration.ofSeconds(5);
-    private static final String FEATURE_KEY = "aifoundation.halo.run/feature";
-    private static final String FEATURE_PATTERN = "[a-z0-9._-]{1,64}";
-
     private final UsageStatisticsStore store;
     private final CallerPluginResolver callerPluginResolver;
     private final Clock clock;
@@ -52,6 +48,7 @@ public class UsageStatisticsService {
     private final AtomicLong writeFailures = new AtomicLong();
     private final AtomicReference<Instant> lastWriteErrorAt = new AtomicReference<>();
     private final AtomicReference<Instant> affectedSince = new AtomicReference<>();
+    private final AtomicReference<Instant> affectedUntil = new AtomicReference<>();
     private final AtomicReference<String> migrationError = new AtomicReference<>();
     private final AtomicReference<String> integrityError = new AtomicReference<>();
     private final AtomicBoolean healthDirty = new AtomicBoolean();
@@ -103,7 +100,8 @@ public class UsageStatisticsService {
     public UsageCallDescriptor describeCall(ModelCallContext context, String operation,
         boolean streaming, java.util.Map<String, Object> metadata) {
         var caller = callerPluginResolver.resolveCurrentCallerSnapshot();
-        return new UsageCallDescriptor(context, operation, streaming, feature(metadata), caller);
+        return new UsageCallDescriptor(context, operation, streaming,
+            UsageFeature.fromMetadata(metadata), caller);
     }
 
     public UsageCallSession beginCall(UsageCallDescriptor descriptor) {
@@ -130,11 +128,11 @@ public class UsageStatisticsService {
     }
 
     public Mono<UsageSummary> summary(UsageQuery query) {
-        return read(() -> store.summary(query, health().complete()));
+        return read(() -> store.summary(query, isComplete(query)));
     }
 
     public Mono<List<UsageTrendPoint>> trends(UsageQuery query) {
-        return read(() -> store.trends(query, health().complete()));
+        return read(() -> store.trends(query, isComplete(query)));
     }
 
     public Mono<UsageCallPage> listCalls(UsageQuery query, int size, String cursor) {
@@ -157,6 +155,7 @@ public class UsageStatisticsService {
             writeFailures.set(0);
             lastWriteErrorAt.set(null);
             affectedSince.set(null);
+            affectedUntil.set(null);
             migrationError.set(null);
             integrityError.set(null);
             healthDirty.set(false);
@@ -170,17 +169,15 @@ public class UsageStatisticsService {
             && migrationError.get() == null && integrityError.get() == null,
             writer.getQueue().size(), droppedEvents.get(), incompleteCalls.get(),
             writeFailures.get(), lastWriteErrorAt.get(), affectedSince.get(),
+            affectedUntil.get(),
             migrationError.get(), integrityError.get());
-    }
-
-    public long currentEpoch() {
-        return epoch;
     }
 
     @PreDestroy
     public void close() {
         accepting = false;
         maintenance.shutdownNow();
+        awaitMaintenanceTermination();
         writer.shutdown();
         try {
             if (!writer.awaitTermination(SHUTDOWN_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)) {
@@ -194,29 +191,52 @@ public class UsageStatisticsService {
             markAffected();
         }
         var lock = storeAccess.writeLock();
-        lock.lock();
+        var locked = false;
         try {
+            locked = lock.tryLock(SHUTDOWN_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
+            if (!locked) {
+                available = false;
+                log.warn("AI usage store remained busy during shutdown; maintenance will close "
+                    + "it after finishing");
+                return;
+            }
             if (available) {
                 persistHealthIfDirty();
             }
             available = false;
             store.close();
+        } catch (InterruptedException error) {
+            Thread.currentThread().interrupt();
+            available = false;
         } finally {
-            lock.unlock();
+            if (locked) {
+                lock.unlock();
+            }
+            readerScheduler.dispose();
         }
-        readerScheduler.dispose();
     }
 
-    private boolean submit(Runnable action, String callId) {
-        return submit(action, callId, () -> { });
+    private void awaitMaintenanceTermination() {
+        try {
+            if (!maintenance.awaitTermination(SHUTDOWN_TIMEOUT.toMillis(),
+                TimeUnit.MILLISECONDS)) {
+                log.warn("AI usage maintenance did not stop within {}", SHUTDOWN_TIMEOUT);
+            }
+        } catch (InterruptedException error) {
+            Thread.currentThread().interrupt();
+        }
     }
 
-    private boolean submit(Runnable action, String callId, Runnable onPermanentFailure) {
+    private void submit(Runnable action, String callId) {
+        submit(action, callId, () -> { });
+    }
+
+    private void submit(Runnable action, String callId, Runnable onPermanentFailure) {
         if (!accepting || !available) {
             droppedEvents.incrementAndGet();
             markAffected();
             onPermanentFailure.run();
-            return false;
+            return;
         }
         try {
             writer.execute(() -> {
@@ -238,19 +258,17 @@ public class UsageStatisticsService {
                 persistHealthIfDirty();
                 log.warn("Failed to persist AI usage statistics for call {}", callId, failure);
             });
-            return true;
         } catch (RejectedExecutionException error) {
             droppedEvents.incrementAndGet();
             markAffected();
             onPermanentFailure.run();
-            return false;
         }
     }
 
     private void markIncomplete(UsageCallSession session) {
         if (session.markIncomplete()) {
             incompleteCalls.incrementAndGet();
-            markAffected();
+            markAffected(session.start().startedAt());
         }
     }
 
@@ -287,13 +305,25 @@ public class UsageStatisticsService {
     }
 
     private void enqueueMaintenance() {
-        submit(() -> store.rollupAndRetain(clock), "maintenance-rollup");
+        var lock = storeAccess.readLock();
+        lock.lock();
         try {
-            store.backup();
-        } catch (RuntimeException error) {
-            recordWriteFailure(error);
-            persistHealthIfDirty();
-            log.warn("Failed to back up AI usage statistics", error);
+            if (!available) {
+                return;
+            }
+            submit(() -> store.rollupAndRetain(clock), "maintenance-rollup");
+            try {
+                store.backup();
+            } catch (RuntimeException error) {
+                recordWriteFailure(error);
+                persistHealthIfDirty();
+                log.warn("Failed to back up AI usage statistics", error);
+            }
+        } finally {
+            lock.unlock();
+            if (!accepting && maintenance.isShutdown()) {
+                store.close();
+            }
         }
     }
 
@@ -305,7 +335,17 @@ public class UsageStatisticsService {
     }
 
     private void markAffected() {
-        affectedSince.compareAndSet(null, clock.instant());
+        markAffected(clock.instant());
+    }
+
+    private void markAffected(Instant affectedFrom) {
+        var now = clock.instant();
+        affectedSince.accumulateAndGet(affectedFrom,
+            (current, candidate) -> current == null || candidate.isBefore(current)
+                ? candidate : current);
+        affectedUntil.accumulateAndGet(now,
+            (current, candidate) -> current == null || candidate.isAfter(current)
+                ? candidate : current);
         healthDirty.set(true);
     }
 
@@ -318,6 +358,7 @@ public class UsageStatisticsService {
         writeFailures.set(health.writeFailures());
         lastWriteErrorAt.set(health.lastWriteErrorAt());
         affectedSince.set(health.affectedSince());
+        affectedUntil.set(health.affectedUntil());
         migrationError.set(health.migrationError());
         integrityError.set(health.integrityError());
     }
@@ -325,7 +366,25 @@ public class UsageStatisticsService {
     private UsageHealthState healthState() {
         return new UsageHealthState(droppedEvents.get(), incompleteCalls.get(),
             writeFailures.get(), lastWriteErrorAt.get(), affectedSince.get(),
+            affectedUntil.get(),
             migrationError.get(), integrityError.get());
+    }
+
+    private boolean isComplete(UsageQuery query) {
+        var current = health();
+        if (!current.available() || current.migrationError() != null
+            || current.integrityError() != null) {
+            return false;
+        }
+        if (current.complete()) {
+            return true;
+        }
+        var since = current.affectedSince();
+        var until = current.affectedUntil();
+        if (since == null || until == null) {
+            return false;
+        }
+        return !query.to().isAfter(since) || query.from().isAfter(until);
     }
 
     private void persistHealthIfDirty() {
@@ -338,17 +397,6 @@ public class UsageStatisticsService {
             healthDirty.set(true);
             log.warn("Failed to persist AI usage statistics health", error);
         }
-    }
-
-    private static String feature(java.util.Map<String, Object> metadata) {
-        if (metadata == null) {
-            return null;
-        }
-        var value = metadata.get(FEATURE_KEY);
-        if (!(value instanceof String text) || !text.matches(FEATURE_PATTERN)) {
-            return null;
-        }
-        return text;
     }
 
     private static ThreadFactory threadFactory(String prefix) {

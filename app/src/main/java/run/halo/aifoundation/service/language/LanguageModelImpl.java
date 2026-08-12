@@ -1709,31 +1709,32 @@ public class LanguageModelImpl implements LanguageModel {
 
     private Mono<ChatResponse> callProvider(GenerateTextRequest request,
         List<org.springframework.ai.chat.messages.Message> messages, int stepIndex) {
-        java.util.function.Supplier<Mono<ChatResponse>> invocation = () -> Mono.defer(() -> {
+        var call = Mono.defer(() -> {
             checkCancellation(request);
             var prompt = new Prompt(messages, buildChatOptions(request));
-            if (shouldUseReasoningAwareStreamCall(request)) {
-                return chatModel.stream(prompt)
+            Supplier<Mono<ChatResponse>> invocation = () -> {
+                if (shouldUseReasoningAwareStreamCall(request)) {
+                    return chatModel.stream(prompt)
                     .collectList()
                     .map(this::aggregateStreamResponses);
-            }
-            return Mono.fromCallable(() -> chatModel.call(prompt))
-                .subscribeOn(Schedulers.boundedElastic());
+                }
+                return Mono.fromCallable(() -> chatModel.call(prompt))
+                    .subscribeOn(Schedulers.boundedElastic());
+            };
+            Supplier<Mono<ChatResponse>> timedInvocation =
+                () -> withStepTimeout(invocation.get(), request);
+            var observed = usageExecutionObserver == null
+                ? timedInvocation.get()
+                : usageExecutionObserver.observe(UsageUnitKind.GENERATION_STEP, stepIndex,
+                    timedInvocation,
+                    response -> NormalizedUsage.from(responseMapper.mapUsage(response)),
+                    response -> response.getMetadata() == null
+                        ? null : response.getMetadata().getModel());
+            return observed;
         });
-        Supplier<Mono<ChatResponse>> timedInvocation =
-            () -> withStepTimeout(invocation.get(), request);
-        var call = usageExecutionObserver == null
-            ? timedInvocation.get()
-            : usageExecutionObserver.observe(UsageUnitKind.GENERATION_STEP, stepIndex,
-                timedInvocation,
-                response -> NormalizedUsage.from(responseMapper.mapUsage(response)),
-                response -> response.getMetadata() == null
-                    ? null : response.getMetadata().getModel());
         var maxRetries = maxRetries(request);
-        if (maxRetries > 0) {
-            call = call.retryWhen(Retry.max(maxRetries).filter(this::isRetryableProviderFailure));
-        }
-        return call;
+        return maxRetries <= 0 ? call
+            : call.retryWhen(Retry.max(maxRetries).filter(this::isRetryableProviderFailure));
     }
 
     private int maxRetries(GenerateTextRequest request) {

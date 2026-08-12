@@ -59,6 +59,9 @@ const timeDetails = computed(() => {
   if (health.affectedSince) {
     details.push(`影响起始时间 ${formatDateTime(health.affectedSince)}`)
   }
+  if (health.affectedUntil) {
+    details.push(`影响结束时间 ${formatDateTime(health.affectedUntil)}`)
+  }
   if (health.lastWriteErrorAt) {
     details.push(`最近写入错误 ${formatDateTime(health.lastWriteErrorAt)}`)
   }
