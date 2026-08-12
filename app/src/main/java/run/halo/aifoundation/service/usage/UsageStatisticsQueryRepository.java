@@ -40,7 +40,7 @@ class UsageStatisticsQueryRepository {
             tokens.reasoning, tokens.total, known, missing,
             calls == 0 ? 1D : (double) known / calls,
             complete && raw.incomplete + daily.incomplete == 0,
-            daily.calls > 0 ? "DAY" : "MILLISECOND", query.from(), query.to());
+            plan.daily() != null ? "DAY" : "MILLISECOND", query.from(), query.to());
     }
 
     private SummaryValues querySummarySource(Connection connection, UsageQuery query, boolean daily)

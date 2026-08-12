@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { UsageHealth } from '@/api/generated'
 import { formatDateTime, formatTokens } from '@/utils/usage'
+import { VAlert } from '@halo-dev/components'
 import { computed } from 'vue'
-import MingcuteAlertLine from '~icons/mingcute/alert-line'
 
 const props = defineProps<{
   health?: UsageHealth
@@ -70,39 +70,35 @@ const timeDetails = computed(() => {
 </script>
 
 <template>
-  <div
+  <VAlert
     v-if="degraded || error"
-    class=":uno: flex gap-3 border rounded-md px-4 py-3"
-    :class="
-      unavailable
-        ? ':uno: border-red-200 bg-red-50 text-red-800'
-        : ':uno: border-amber-200 bg-amber-50 text-amber-800'
-    "
+    :type="unavailable ? 'error' : 'warning'"
+    :title="title"
     role="alert"
   >
-    <MingcuteAlertLine class=":uno: mt-0.5 size-5 shrink-0" />
-    <div class=":uno: min-w-0 flex-1 text-sm">
-      <div class=":uno: font-semibold">{{ title }}</div>
-      <div class=":uno: mt-1 text-xs leading-5">
-        <template v-if="unavailable">
-          模型调用不受影响，但用量数据可能正在丢失。历史数据未被清除，请检查存储状态后再解读统计结果。
-        </template>
-        <template v-else-if="incomplete">
-          部分统计事件未能持久化，当前汇总与历史可能低于实际用量。
-        </template>
-        <template v-else>
-          无法获取统计健康状态，当前页面展示的汇总与历史可能低于实际用量，请稍后刷新重试。
-        </template>
+    <template #description>
+      <div class=":uno: min-w-0 text-sm">
+        <div class=":uno: mt-1 text-xs leading-5">
+          <template v-if="unavailable">
+            模型调用不受影响，但用量数据可能正在丢失。历史数据未被清除，请检查存储状态后再解读统计结果。
+          </template>
+          <template v-else-if="incomplete">
+            部分统计事件未能持久化，当前汇总与历史可能低于实际用量。
+          </template>
+          <template v-else>
+            无法获取统计健康状态，当前页面展示的汇总与历史可能低于实际用量，请稍后刷新重试。
+          </template>
+        </div>
+        <ul v-if="storageErrors.length" class=":uno: mt-1 list-disc pl-4 text-xs leading-5">
+          <li v-for="error in storageErrors" :key="error">{{ error }}</li>
+        </ul>
+        <div v-if="lossDetails.length" class=":uno: mt-1 text-xs leading-5">
+          {{ lossDetails.join('；') }}
+        </div>
+        <div v-if="timeDetails.length" class=":uno: mt-1 text-xs leading-5 opacity-80">
+          {{ timeDetails.join('；') }}
+        </div>
       </div>
-      <ul v-if="storageErrors.length" class=":uno: mt-1 list-disc pl-4 text-xs leading-5">
-        <li v-for="error in storageErrors" :key="error">{{ error }}</li>
-      </ul>
-      <div v-if="lossDetails.length" class=":uno: mt-1 text-xs leading-5">
-        {{ lossDetails.join('；') }}
-      </div>
-      <div v-if="timeDetails.length" class=":uno: mt-1 text-xs leading-5 opacity-80">
-        {{ timeDetails.join('；') }}
-      </div>
-    </div>
-  </div>
+    </template>
+  </VAlert>
 </template>

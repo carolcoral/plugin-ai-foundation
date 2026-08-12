@@ -4,15 +4,15 @@ import type { UsageQueryParams } from '@/composables/use-usage-filters'
 import { useInfiniteQuery, useQuery, type QueryClient } from '@tanstack/vue-query'
 import type { ComputedRef } from 'vue'
 
-export const QK_USAGE_SUMMARY = 'plugin:ai-foundation:usage-summary'
-export const QK_USAGE_TRENDS = 'plugin:ai-foundation:usage-trends'
-export const QK_USAGE_CALLS = 'plugin:ai-foundation:usage-calls'
-export const QK_USAGE_CALL_DETAIL = 'plugin:ai-foundation:usage-call-detail'
-export const QK_USAGE_HEALTH = 'plugin:ai-foundation:usage-health'
+const QK_USAGE_SUMMARY = 'plugin:ai-foundation:usage-summary'
+const QK_USAGE_TRENDS = 'plugin:ai-foundation:usage-trends'
+const QK_USAGE_CALLS = 'plugin:ai-foundation:usage-calls'
+const QK_USAGE_CALL_DETAIL = 'plugin:ai-foundation:usage-call-detail'
+const QK_USAGE_HEALTH = 'plugin:ai-foundation:usage-health'
 
-export const USAGE_CALLS_PAGE_SIZE = 50
+const USAGE_CALLS_PAGE_SIZE = 50
 
-export type UsageParamsBuilder = () => UsageQueryParams | undefined
+type UsageParamsBuilder = () => UsageQueryParams | undefined
 
 export function reloadUsageQueries(queryClient: QueryClient) {
   queryClient.invalidateQueries({ queryKey: [QK_USAGE_SUMMARY] })

@@ -15,7 +15,7 @@ import UsageHealthAlert from '@/views/components/usage/UsageHealthAlert.vue'
 import UsageResetModal from '@/views/components/usage/UsageResetModal.vue'
 import UsageSummaryCards from '@/views/components/usage/UsageSummaryCards.vue'
 import UsageTrendChart from '@/views/components/usage/UsageTrendChart.vue'
-import { VButton, VCard } from '@halo-dev/components'
+import { VAlert, VButton, VCard } from '@halo-dev/components'
 import { computed, shallowRef } from 'vue'
 
 const filters = useUsageFilters()
@@ -73,13 +73,12 @@ function refresh() {
       </div>
     </VCard>
 
-    <div
+    <VAlert
       v-if="!filters.valid.value"
-      class=":uno: border border-amber-200 rounded-md bg-amber-50 px-4 py-3 text-sm text-amber-800"
+      type="warning"
+      description="请选择有效的起止日期（开始日期需早于结束日期，且跨度不超过 3660 天）。"
       role="status"
-    >
-      请选择有效的起止日期（开始日期需早于结束日期，且跨度不超过 3660 天）。
-    </div>
+    />
 
     <template v-else>
       <VCard :body-class="['!p-0']">

@@ -1,4 +1,5 @@
 import { useRouteQuery } from '@vueuse/router'
+import { utils } from '@halo-dev/ui-shared'
 import { computed, shallowRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
@@ -53,14 +54,7 @@ export interface UsageQueryParams {
 const FEATURE_PATTERN = /^[a-z0-9._-]{1,64}$/
 
 // 与后端 UsageStatisticsConsoleEndpoint 的最大查询跨度一致
-export const USAGE_MAX_RANGE_DAYS = 3660
-
-/** 推进到本地日历次日零点（DST 切换日安全，不能简单 +24h） */
-function nextLocalDay(day: Date) {
-  const next = new Date(day)
-  next.setDate(next.getDate() + 1)
-  return next
-}
+const USAGE_MAX_RANGE_DAYS = 3660
 
 /**
  * 将筛选状态转换为半开区间 [from, to) 的 UTC instant 查询参数。
@@ -78,26 +72,31 @@ export function toUsageQueryParams(
     if (!state.fromDate || !state.toDate) {
       return undefined
     }
-    from = startOfLocalDay(state.fromDate)
+    const startDay = utils.date.dayjs(state.fromDate)
+    const endDay = utils.date.dayjs(state.toDate)
+    if (!startDay.isValid() || !endDay.isValid()) {
+      return undefined
+    }
+    from = startDay.startOf('day').toDate()
     // 结束日期按本地次日零点作为半开区间上界（日历推进，DST 安全）
-    const endDay = startOfLocalDay(state.toDate)
-    to = endDay ? nextLocalDay(endDay) : undefined
+    to = endDay.startOf('day').add(1, 'day').toDate()
   } else {
     const duration = RANGE_DURATIONS[state.range]
     if (!duration) {
       return undefined
     }
-    to = now
-    from = new Date(now.getTime() - duration)
+    const end = utils.date.dayjs(now)
+    to = end.toDate()
+    from = end.subtract(duration, 'millisecond').toDate()
   }
 
   if (!from || !to || Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
     return undefined
   }
-  if (from.getTime() >= to.getTime()) {
+  if (!utils.date.dayjs(from).isBefore(to)) {
     return undefined
   }
-  if (to.getTime() - from.getTime() > USAGE_MAX_RANGE_DAYS * 24 * 60 * 60 * 1000) {
+  if (utils.date.dayjs(to).diff(from) > USAGE_MAX_RANGE_DAYS * 24 * 60 * 60 * 1000) {
     return undefined
   }
 
@@ -115,11 +114,6 @@ export function toUsageQueryParams(
     usageQuality: state.usageQuality || undefined,
     resolution: state.resolution || undefined,
   }
-}
-
-function startOfLocalDay(date: string) {
-  const parsed = new Date(`${date}T00:00:00`)
-  return Number.isNaN(parsed.getTime()) ? undefined : parsed
 }
 
 export function useUsageFilters(now: () => Date = () => new Date()) {

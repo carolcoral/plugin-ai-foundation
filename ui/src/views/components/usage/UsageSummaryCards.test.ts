@@ -8,6 +8,13 @@ rstest.mock('@halo-dev/components', () => ({
   VLoading: defineComponent({
     template: '<div data-test="loading">loading</div>',
   }),
+  VAlert: defineComponent({
+    props: ['description'],
+    template: '<div role="status">{{ description }}</div>',
+  }),
+  VTag: defineComponent({
+    template: '<span><slot /></span>',
+  }),
 }))
 
 function mountCards(summary?: UsageSummary | null, loading = false) {

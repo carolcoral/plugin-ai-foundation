@@ -105,7 +105,7 @@ describe('UsageFilterBar', () => {
 
   it('emits refresh and reset actions', async () => {
     const wrapper = mountBar()
-    const refresh = wrapper.find('button[class*="hover\\:bg-gray-50"]')
+    const refresh = wrapper.find('button[aria-label="刷新"]')
     await refresh.trigger('click')
     expect(wrapper.emitted('refresh')).toHaveLength(1)
 

@@ -24,6 +24,9 @@ rstest.mock('@halo-dev/components', () => ({
         )
     },
   }),
+  VTag: defineComponent({
+    template: '<span><slot /></span>',
+  }),
 }))
 
 const UsageCallExecutionsStub = defineComponent({

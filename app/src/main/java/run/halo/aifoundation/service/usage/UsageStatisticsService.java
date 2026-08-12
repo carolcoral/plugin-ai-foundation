@@ -177,7 +177,7 @@ public class UsageStatisticsService {
     public void close() {
         accepting = false;
         maintenance.shutdownNow();
-        awaitMaintenanceTermination();
+        var maintenanceStopped = awaitMaintenanceTermination();
         writer.shutdown();
         try {
             if (!writer.awaitTermination(SHUTDOWN_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)) {
@@ -189,6 +189,14 @@ public class UsageStatisticsService {
             Thread.currentThread().interrupt();
             droppedEvents.addAndGet(writer.shutdownNow().size());
             markAffected();
+        }
+        if (!maintenanceStopped) {
+            available = false;
+            log.warn("Forcing the AI usage store closed to stop in-flight maintenance");
+            store.close();
+            awaitMaintenanceTermination();
+            readerScheduler.dispose();
+            return;
         }
         var lock = storeAccess.writeLock();
         var locked = false;
@@ -216,14 +224,17 @@ public class UsageStatisticsService {
         }
     }
 
-    private void awaitMaintenanceTermination() {
+    private boolean awaitMaintenanceTermination() {
         try {
             if (!maintenance.awaitTermination(SHUTDOWN_TIMEOUT.toMillis(),
                 TimeUnit.MILLISECONDS)) {
                 log.warn("AI usage maintenance did not stop within {}", SHUTDOWN_TIMEOUT);
+                return false;
             }
+            return true;
         } catch (InterruptedException error) {
             Thread.currentThread().interrupt();
+            return false;
         }
     }
 

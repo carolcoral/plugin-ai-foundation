@@ -6,12 +6,12 @@ import {
   formatTokens,
   usageModelTypeLabel,
   usageOperationLabel,
-  usageQualityBadgeClass,
+  usageQualityTagTheme,
   usageQualityLabel,
-  usageStatusBadgeClass,
+  usageStatusTagTheme,
   usageStatusLabel,
 } from '@/utils/usage'
-import { VButton, VEmpty, VLoading } from '@halo-dev/components'
+import { VButton, VEmpty, VLoading, VTag } from '@halo-dev/components'
 import { computed, ref } from 'vue'
 import MingcuteDownLine from '~icons/mingcute/down-line'
 import UsageCallExecutions from './UsageCallExecutions.vue'
@@ -119,25 +119,18 @@ function modelIdText(call: UsageCallItem) {
           </span>
 
           <span class=":uno: flex flex-wrap items-center gap-1">
-            <span
-              class=":uno: inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium"
-              :class="usageStatusBadgeClass(call.status)"
-            >
+            <VTag size="sm" :theme="usageStatusTagTheme(call.status)">
               {{ usageStatusLabel(call.status) }}
-            </span>
-            <span
-              v-if="call.streaming"
-              class=":uno: inline-flex items-center rounded bg-indigo-50 px-1.5 py-0.5 text-xs text-indigo-700 font-medium"
-            >
-              流式
-            </span>
-            <span
+            </VTag>
+            <VTag v-if="call.streaming" size="sm" theme="secondary">流式</VTag>
+            <VTag
               v-if="call.complete === false"
               v-tooltip="'该调用的持久化或执行证据不完整'"
-              class=":uno: inline-flex items-center rounded bg-amber-50 px-1.5 py-0.5 text-xs text-amber-700 font-medium"
+              size="sm"
+              theme="secondary"
             >
               不完整
-            </span>
+            </VTag>
           </span>
 
           <span class=":uno: col-span-2 min-w-0 lg:col-span-1">
@@ -172,12 +165,9 @@ function modelIdText(call: UsageCallItem) {
           <span class=":uno: col-span-2 min-w-0 lg:col-span-1">
             <span class=":uno: flex items-center gap-1 text-xs text-gray-950">
               {{ formatTokens(call.usage?.accountedTotalTokens) }}
-              <span
-                class=":uno: inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium"
-                :class="usageQualityBadgeClass(call.usage?.quality)"
-              >
+              <VTag size="sm" :theme="usageQualityTagTheme(call.usage?.quality)">
                 {{ usageQualityLabel(call.usage?.quality) }}
-              </span>
+              </VTag>
             </span>
             <span class=":uno: mt-0.5 block truncate text-xs text-gray-500">
               {{ formatTokens(call.usage?.inputTokens) }} /

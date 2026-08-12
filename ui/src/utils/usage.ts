@@ -1,7 +1,6 @@
 import { utils } from '@halo-dev/ui-shared'
-import type { NormalizedUsage } from '@/api/generated'
 
-export const UNKNOWN_TEXT = '未知'
+const UNKNOWN_TEXT = '未知'
 export type UsageTrendResolution = 'HOUR' | 'DAY'
 export type UsageDisplayedResolution = UsageTrendResolution | 'MILLISECOND'
 
@@ -56,21 +55,30 @@ const UNIT_KIND_LABELS: Record<string, string> = {
   IMAGE_BATCH: '图像批次',
 }
 
-const STATUS_BADGE_CLASSES: Record<string, string> = {
-  SUCCEEDED: 'bg-emerald-50 text-emerald-700',
-  FAILED: 'bg-red-50 text-red-700',
-  TIMED_OUT: 'bg-amber-50 text-amber-700',
-  CANCELLED: 'bg-gray-100 text-gray-600',
-  ABANDONED: 'bg-gray-100 text-gray-500',
-  IN_PROGRESS: 'bg-blue-50 text-blue-700',
-}
+const STATUS_TAG_THEMES = {
+  SUCCEEDED: 'primary',
+  FAILED: 'danger',
+  TIMED_OUT: 'secondary',
+  CANCELLED: 'default',
+  ABANDONED: 'default',
+  IN_PROGRESS: 'secondary',
+} as const
 
-const QUALITY_BADGE_CLASSES: Record<string, string> = {
-  REPORTED_COMPONENTS: 'bg-emerald-50 text-emerald-700',
-  REPORTED_TOTAL: 'bg-emerald-50 text-emerald-700',
-  PARTIAL: 'bg-amber-50 text-amber-700',
-  ESTIMATED: 'bg-blue-50 text-blue-700',
-  MISSING: 'bg-red-50 text-red-700',
+const QUALITY_TAG_THEMES = {
+  REPORTED_COMPONENTS: 'primary',
+  REPORTED_TOTAL: 'primary',
+  PARTIAL: 'secondary',
+  ESTIMATED: 'secondary',
+  MISSING: 'danger',
+} as const
+
+type TagTheme = 'default' | 'primary' | 'secondary' | 'danger'
+
+function tagThemeOf(
+  themes: Record<string, TagTheme>,
+  value?: string | null,
+): TagTheme {
+  return themes[value || ''] || 'default'
 }
 
 const INTEGER_FORMATTER = new Intl.NumberFormat('en-US', {
@@ -115,12 +123,12 @@ export function usageUnitKindLabel(value?: string | null) {
   return labelOf(UNIT_KIND_LABELS, value)
 }
 
-export function usageStatusBadgeClass(value?: string | null) {
-  return STATUS_BADGE_CLASSES[value || ''] || 'bg-gray-100 text-gray-600'
+export function usageStatusTagTheme(value?: string | null) {
+  return tagThemeOf(STATUS_TAG_THEMES, value)
 }
 
-export function usageQualityBadgeClass(value?: string | null) {
-  return QUALITY_BADGE_CLASSES[value || ''] || 'bg-gray-100 text-gray-600'
+export function usageQualityTagTheme(value?: string | null) {
+  return tagThemeOf(QUALITY_TAG_THEMES, value)
 }
 
 /** Token 数值展示：null/undefined 一律显示「未知」，绝不显示 0。 */
@@ -187,8 +195,4 @@ export function formatBucketStart(
       : UNKNOWN_TEXT
   }
   return formatDateTime(iso)
-}
-
-export function usageQualityOf(usage?: NormalizedUsage | null) {
-  return usage?.quality || 'MISSING'
 }

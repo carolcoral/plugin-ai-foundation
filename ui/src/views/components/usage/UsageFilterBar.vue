@@ -7,7 +7,7 @@ import {
   USAGE_QUALITY_OPTIONS,
   USAGE_STATUS_OPTIONS,
 } from '@/utils/usage'
-import { IconRefreshLine, VSpace } from '@halo-dev/components'
+import { IconRefreshLine, VButton, VSpace } from '@halo-dev/components'
 import { computed } from 'vue'
 
 const props = defineProps<{
@@ -97,24 +97,17 @@ function update(patch: Partial<UsageFilterState>) {
 
       <VSpace class=":uno: flex-wrap sm:ml-auto">
         <FilterCleanButton v-if="hasDimensionFilters" @click="emit('clear')" />
-        <button
-          type="button"
-          class=":uno: group size-9 inline-flex cursor-pointer items-center justify-center border border-gray-200 rounded-md bg-white hover:bg-gray-50"
-          v-tooltip="`刷新`"
+        <VButton
+          v-tooltip="'刷新'"
+          aria-label="刷新"
+          size="sm"
+          circle
+          :loading="fetching"
           @click="emit('refresh')"
         >
-          <IconRefreshLine
-            :class="{ ':uno: animate-spin text-gray-900': fetching }"
-            class=":uno: size-4 text-gray-600 group-hover:text-gray-900"
-          />
-        </button>
-        <button
-          type="button"
-          class=":uno: h-9 inline-flex cursor-pointer items-center border border-red-200 rounded-md bg-white px-3 text-xs text-red-600 hover:bg-red-50"
-          @click="emit('reset')"
-        >
-          重置统计
-        </button>
+          <template #icon><IconRefreshLine /></template>
+        </VButton>
+        <VButton type="danger" size="sm" ghost @click="emit('reset')">重置统计</VButton>
       </VSpace>
     </div>
 

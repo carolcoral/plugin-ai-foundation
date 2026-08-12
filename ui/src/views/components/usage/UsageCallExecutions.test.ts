@@ -13,6 +13,9 @@ rstest.mock('@halo-dev/components', () => ({
   VLoading: defineComponent({
     template: '<div data-test="loading">loading</div>',
   }),
+  VTag: defineComponent({
+    template: '<span><slot /></span>',
+  }),
 }))
 
 const useUsageCallDetailMock = rstest.mocked(useUsageCallDetail)

@@ -4,13 +4,14 @@ import {
   formatDateTime,
   formatDuration,
   formatTokens,
-  usageQualityBadgeClass,
+  usageQualityTagTheme,
   usageQualityLabel,
-  usageStatusBadgeClass,
+  usageStatusTagTheme,
   usageStatusLabel,
   usageUnitKindLabel,
 } from '@/utils/usage'
-import { VLoading } from '@halo-dev/components'
+import { VLoading, VTag } from '@halo-dev/components'
+import { utils } from '@halo-dev/ui-shared'
 
 const props = defineProps<{
   callId: string
@@ -58,12 +59,9 @@ const { data, isLoading, isError } = useUsageCallDetail(() => props.callId)
             </td>
             <td class=":uno: py-2 pr-3">{{ execution.attemptIndex ?? '-' }}</td>
             <td class=":uno: py-2 pr-3">
-              <span
-                class=":uno: inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium"
-                :class="usageStatusBadgeClass(execution.status)"
-              >
+              <VTag size="sm" :theme="usageStatusTagTheme(execution.status)">
                 {{ usageStatusLabel(execution.status) }}
-              </span>
+              </VTag>
             </td>
             <td class=":uno: whitespace-nowrap py-2 pr-3">
               {{ formatDateTime(execution.startedAt) }}
@@ -72,8 +70,7 @@ const { data, isLoading, isError } = useUsageCallDetail(() => props.callId)
               {{
                 execution.startedAt && execution.completedAt
                   ? formatDuration(
-                      new Date(execution.completedAt).getTime() -
-                        new Date(execution.startedAt).getTime(),
+                      utils.date.dayjs(execution.completedAt).diff(execution.startedAt),
                     )
                   : '-'
               }}
@@ -84,12 +81,9 @@ const { data, isLoading, isError } = useUsageCallDetail(() => props.callId)
               {{ formatTokens(execution.usage?.outputTokens) }}
             </td>
             <td class=":uno: py-2 pr-3">
-              <span
-                class=":uno: inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium"
-                :class="usageQualityBadgeClass(execution.usage?.quality)"
-              >
+              <VTag size="sm" :theme="usageQualityTagTheme(execution.usage?.quality)">
                 {{ usageQualityLabel(execution.usage?.quality) }}
-              </span>
+              </VTag>
             </td>
             <td class=":uno: py-2">
               <span v-if="execution.error?.type">

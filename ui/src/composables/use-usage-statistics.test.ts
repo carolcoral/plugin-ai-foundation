@@ -4,12 +4,6 @@ import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 import { flushPromises, mount } from '@vue/test-utils'
 import { computed, defineComponent, h } from 'vue'
 import {
-  QK_USAGE_CALL_DETAIL,
-  QK_USAGE_CALLS,
-  QK_USAGE_HEALTH,
-  QK_USAGE_SUMMARY,
-  QK_USAGE_TRENDS,
-  USAGE_CALLS_PAGE_SIZE,
   reloadUsageQueries,
   useUsageCalls,
 } from './use-usage-statistics'
@@ -32,11 +26,11 @@ describe('reloadUsageQueries', () => {
     reloadUsageQueries(queryClient)
 
     for (const key of [
-      QK_USAGE_SUMMARY,
-      QK_USAGE_TRENDS,
-      QK_USAGE_CALLS,
-      QK_USAGE_CALL_DETAIL,
-      QK_USAGE_HEALTH,
+      'plugin:ai-foundation:usage-summary',
+      'plugin:ai-foundation:usage-trends',
+      'plugin:ai-foundation:usage-calls',
+      'plugin:ai-foundation:usage-call-detail',
+      'plugin:ai-foundation:usage-health',
     ]) {
       expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: [key] })
     }
@@ -68,7 +62,7 @@ describe('useUsageCalls', () => {
 
     expect(listAiUsageCalls).toHaveBeenNthCalledWith(
       1,
-      expect.objectContaining({ size: USAGE_CALLS_PAGE_SIZE, cursor: undefined }),
+      expect.objectContaining({ size: 50, cursor: undefined }),
     )
 
     await query!.fetchNextPage()
@@ -76,7 +70,7 @@ describe('useUsageCalls', () => {
 
     expect(listAiUsageCalls).toHaveBeenNthCalledWith(
       2,
-      expect.objectContaining({ size: USAGE_CALLS_PAGE_SIZE, cursor: 'cursor-2' }),
+      expect.objectContaining({ size: 50, cursor: 'cursor-2' }),
     )
     expect(query!.hasNextPage?.value ?? false).toBe(false)
   })

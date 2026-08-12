@@ -13,6 +13,7 @@ import static org.mockito.ArgumentMatchers.any;
 import java.util.Map;
 import java.time.Duration;
 import java.time.Instant;
+import java.lang.reflect.Method;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -242,6 +243,41 @@ class UsageStatisticsServiceTest {
     }
 
     @Test
+    void closesStoreToInterruptMaintenanceThatIgnoresThreadInterruption() throws Exception {
+        var store = mock(UsageStatisticsStore.class);
+        when(store.currentEpoch()).thenReturn(1L);
+        var backupStarted = new CountDownLatch(1);
+        var releaseBackup = new CountDownLatch(1);
+        doAnswer(invocation -> {
+            backupStarted.countDown();
+            while (releaseBackup.getCount() > 0) {
+                try {
+                    releaseBackup.await();
+                } catch (InterruptedException ignored) {
+                    // Simulate a JDBC operation that does not respond to thread interruption.
+                }
+            }
+            return null;
+        }).when(store).backup();
+        doAnswer(invocation -> {
+            releaseBackup.countDown();
+            return null;
+        }).when(store).close();
+        service = new UsageStatisticsService(store, callerResolver());
+        service.initialize();
+
+        var maintenance = maintenanceExecutor(service);
+        maintenance.execute(() -> invokeMaintenance(service));
+        assertThat(backupStarted.await(2, TimeUnit.SECONDS)).isTrue();
+
+        var close = CompletableFuture.runAsync(service::close);
+        close.get(7, TimeUnit.SECONDS);
+        assertThat(maintenance.awaitTermination(2, TimeUnit.SECONDS)).isTrue();
+        verify(store, org.mockito.Mockito.atLeastOnce()).close();
+        service = null;
+    }
+
+    @Test
     void waitsForAnInFlightResetBeforeClosingTheStore() throws Exception {
         var store = mock(UsageStatisticsStore.class);
         when(store.currentEpoch()).thenReturn(1L);
@@ -293,5 +329,26 @@ class UsageStatisticsServiceTest {
             Thread.sleep(10);
         }
         assertThat(condition.getAsBoolean()).isTrue();
+    }
+
+    private static void invokeMaintenance(UsageStatisticsService service) {
+        try {
+            Method method = UsageStatisticsService.class.getDeclaredMethod("enqueueMaintenance");
+            method.setAccessible(true);
+            method.invoke(service);
+        } catch (ReflectiveOperationException error) {
+            throw new IllegalStateException(error);
+        }
+    }
+
+    private static java.util.concurrent.ScheduledExecutorService maintenanceExecutor(
+        UsageStatisticsService service) {
+        try {
+            var field = UsageStatisticsService.class.getDeclaredField("maintenance");
+            field.setAccessible(true);
+            return (java.util.concurrent.ScheduledExecutorService) field.get(service);
+        } catch (ReflectiveOperationException error) {
+            throw new IllegalStateException(error);
+        }
     }
 }

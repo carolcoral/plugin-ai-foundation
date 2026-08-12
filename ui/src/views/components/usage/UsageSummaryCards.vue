@@ -5,11 +5,11 @@ import {
   formatDateTime,
   formatTokens,
   usageResolutionLabel,
-  usageStatusBadgeClass,
+  usageStatusTagTheme,
   usageStatusLabel,
   type UsageDisplayedResolution,
 } from '@/utils/usage'
-import { VLoading } from '@halo-dev/components'
+import { VAlert, VLoading, VTag } from '@halo-dev/components'
 import { computed } from 'vue'
 
 const props = defineProps<{
@@ -99,13 +99,13 @@ const intervalText = computed(() => {
     <VLoading v-if="loading" />
 
     <template v-else>
-      <div
+      <VAlert
         v-if="summary?.complete === false"
-        class=":uno: mb-3 flex items-center gap-2 border border-amber-200 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800"
+        class=":uno: mb-3"
+        type="warning"
+        description="数据可能不完整：部分统计事件丢失，以下数值可能低于实际用量。"
         role="status"
-      >
-        数据可能不完整：部分统计事件丢失或执行证据缺失，以下数值可能低于实际用量。
-      </div>
+      />
 
       <div class=":uno: grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
         <div
@@ -125,14 +125,14 @@ const intervalText = computed(() => {
 
       <div class=":uno: mt-3 flex flex-wrap items-center gap-2">
         <span class=":uno: text-xs text-gray-500">状态分布：</span>
-        <span
+        <VTag
           v-for="item in statusItems"
           :key="item.status"
-          class=":uno: inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium"
-          :class="usageStatusBadgeClass(item.status)"
+          size="sm"
+          :theme="usageStatusTagTheme(item.status)"
         >
           {{ usageStatusLabel(item.status) }} {{ formatTokens(item.count) }}
-        </span>
+        </VTag>
       </div>
 
       <div

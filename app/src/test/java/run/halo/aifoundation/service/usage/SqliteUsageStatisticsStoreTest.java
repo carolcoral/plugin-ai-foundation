@@ -54,7 +54,7 @@ class SqliteUsageStatisticsStoreTest {
         assertThat(summary.callCount()).isEqualTo(1);
         assertThat(summary.accountedTotalTokens()).isEqualTo(15L);
         assertThat(summary.usageCoverage()).isEqualTo(1D);
-        assertThat(store.quickCheck()).isEqualTo("ok");
+        assertThat(quickCheck(paths().database())).isEqualTo("ok");
     }
 
     @Test
@@ -169,6 +169,7 @@ class SqliteUsageStatisticsStoreTest {
         var summary = store.summary(executionDay, true);
         assertThat(summary.callCount()).isZero();
         assertThat(summary.accountedTotalTokens()).isEqualTo(15L);
+        assertThat(summary.resolution()).isEqualTo("DAY");
 
         store.rollupAndRetain(
             Clock.fixed(Instant.parse("2026-08-03T02:00:00Z"), ZoneOffset.UTC));
@@ -358,7 +359,7 @@ class SqliteUsageStatisticsStoreTest {
         store.initialize();
 
         assertThat(store.getCall(start.id())).isPresent();
-        assertThat(store.quickCheck()).isEqualTo("ok");
+        assertThat(quickCheck(paths.database())).isEqualTo("ok");
         assertThat(store.readHealth().integrityError())
             .isEqualTo("RECOVERED_FROM_SNAPSHOT");
         assertThat(store.readHealth().affectedSince()).isNotNull();
@@ -411,7 +412,7 @@ class SqliteUsageStatisticsStoreTest {
         store.initialize();
 
         assertThat(store.getCall(start.id())).isPresent();
-        assertThat(store.quickCheck()).isEqualTo("ok");
+        assertThat(quickCheck(paths.database())).isEqualTo("ok");
         try (var files = Files.list(paths.backupDirectory().resolve("corrupted"))) {
             assertThat(files.filter(Files::isRegularFile).toList()).hasSize(1);
         }
@@ -521,7 +522,7 @@ class SqliteUsageStatisticsStoreTest {
         for (int i = 0; i < 3; i++) {
             store = new SqliteUsageStatisticsStore(paths);
             store.initialize();
-            assertThat(store.quickCheck()).isEqualTo("ok");
+            assertThat(quickCheck(paths.database())).isEqualTo("ok");
             store.close();
             store = null;
         }
@@ -675,6 +676,16 @@ class SqliteUsageStatisticsStoreTest {
         return new UsageQuery(query.from(), query.to(), query.callerPlugin(), query.feature(),
             query.providerName(), query.modelName(), query.modelType(), query.operation(), status,
             query.usageQuality(), query.resolution());
+    }
+
+    private static String quickCheck(Path database) {
+        try (var connection = new org.sqlite.JDBC().connect(
+            "jdbc:sqlite:" + database, new java.util.Properties());
+            var rows = connection.createStatement().executeQuery("PRAGMA quick_check")) {
+            return rows.next() ? rows.getString(1) : "no-result";
+        } catch (SQLException error) {
+            throw new IllegalStateException("Failed to check test database", error);
+        }
     }
 
     private static final class SnapshotBarrierQueryRepository

@@ -7,10 +7,10 @@ import {
   formatTokens,
   usageModelTypeLabel,
   usageOperationLabel,
-  usageQualityBadgeClass,
+  usageQualityTagTheme,
   usageQualityLabel,
   usageResolutionLabel,
-  usageStatusBadgeClass,
+  usageStatusTagTheme,
   usageStatusLabel,
   usageUnitKindLabel,
 } from './usage'
@@ -31,7 +31,7 @@ describe('usage utils', () => {
     expect(formatCoverage(0)).toBe('0%')
   })
 
-  it('renders all statuses with distinct labels and badge classes', () => {
+  it('renders all statuses with labels and semantic tag themes', () => {
     const statuses = [
       'IN_PROGRESS',
       'SUCCEEDED',
@@ -41,9 +41,9 @@ describe('usage utils', () => {
       'ABANDONED',
     ] as const
     const labels = new Set(statuses.map((status) => usageStatusLabel(status)))
-    const classes = new Set(statuses.map((status) => usageStatusBadgeClass(status)))
     expect(labels.size).toBe(statuses.length)
-    expect(classes.size).toBe(statuses.length)
+    expect(usageStatusTagTheme('FAILED')).toBe('danger')
+    expect(usageStatusTagTheme('SUCCEEDED')).toBe('primary')
     expect(usageStatusLabel('CANCELLED')).toBe('已取消')
     expect(usageStatusLabel('TIMED_OUT')).toBe('超时')
     expect(usageStatusLabel('ABANDONED')).toBe('已废弃')
@@ -58,7 +58,8 @@ describe('usage utils', () => {
     expect(usageQualityLabel('ESTIMATED')).toBe('估算用量')
     expect(usageQualityLabel('MISSING')).toBe('用量缺失')
     expect(usageQualityLabel(undefined)).toBe('未知')
-    expect(usageQualityBadgeClass('MISSING')).not.toBe(usageQualityBadgeClass('REPORTED_TOTAL'))
+    expect(usageQualityTagTheme('MISSING')).toBe('danger')
+    expect(usageQualityTagTheme('REPORTED_TOTAL')).toBe('primary')
   })
 
   it('renders model type, operation, and unit kind labels', () => {

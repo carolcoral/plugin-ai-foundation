@@ -322,17 +322,13 @@ public class SqliteUsageStatisticsStore implements UsageStatisticsStore {
         });
     }
 
-    String quickCheck() {
-        requireInitialized();
-        return withReader(this::quickCheck);
-    }
-
     @Override
-    public synchronized void close() {
+    public void close() {
         if (!initialized || !closing.compareAndSet(false, true)) {
             return;
         }
         initialized = false;
+        activeReaders.forEach(SqliteUsageStatisticsStore::close);
         boolean acquired = false;
         try {
             acquired = readerPermits.tryAcquire(MAX_CONCURRENT_READERS, BUSY_TIMEOUT_MILLIS,
@@ -341,8 +337,7 @@ public class SqliteUsageStatisticsStore implements UsageStatisticsStore {
             Thread.currentThread().interrupt();
         }
         if (!acquired) {
-            log.warn("Timed out waiting for AI usage statistics readers; closing them");
-            activeReaders.forEach(SqliteUsageStatisticsStore::close);
+            log.warn("Timed out waiting for AI usage statistics readers after closing them");
         }
         closeSilently();
         if (acquired) {

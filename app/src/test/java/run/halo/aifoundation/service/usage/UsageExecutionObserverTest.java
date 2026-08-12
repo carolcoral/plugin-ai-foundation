@@ -216,7 +216,8 @@ class UsageExecutionObserverTest {
         var session = session(service);
         var timeout = reactor.core.Exceptions.propagate(new TimeoutException("slow provider"));
 
-        session.beginExecution(UsageUnitKind.RERANK, 0).fail(timeout);
+        session.beginExecution(UsageUnitKind.RERANK, 0)
+            .fail(timeout, NormalizedUsage.missing(), null);
         session.fail(timeout, NormalizedUsage.missing(), 1);
 
         var execution = ArgumentCaptor.forClass(UsageExecutionRecord.class);
@@ -235,7 +236,8 @@ class UsageExecutionObserverTest {
         var session = session(service);
         var cancelled = new AiGenerationCancelledException("cancelled by request token");
 
-        session.beginExecution(UsageUnitKind.GENERATION_STEP, 0).fail(cancelled);
+        session.beginExecution(UsageUnitKind.GENERATION_STEP, 0)
+            .fail(cancelled, NormalizedUsage.missing(), null);
         session.fail(cancelled, NormalizedUsage.missing(), 1);
 
         var execution = ArgumentCaptor.forClass(UsageExecutionRecord.class);
@@ -290,7 +292,8 @@ class UsageExecutionObserverTest {
         var service = mock(UsageStatisticsService.class);
         var session = session(service);
         var failure = new IllegalStateException("stream failed");
-        session.beginExecution(UsageUnitKind.GENERATION_STEP, 0).fail(failure);
+        session.beginExecution(UsageUnitKind.GENERATION_STEP, 0)
+            .fail(failure, NormalizedUsage.missing(), null);
 
         session.succeed(NormalizedUsage.missing(), null, 0);
 

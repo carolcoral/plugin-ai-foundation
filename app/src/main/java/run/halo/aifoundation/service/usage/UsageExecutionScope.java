@@ -27,18 +27,10 @@ public final class UsageExecutionScope {
         finish(UsageStatus.SUCCEEDED, null, usage, responseModelId);
     }
 
-    public void fail(Throwable error) {
-        fail(error, NormalizedUsage.missing(), null);
-    }
-
     public void fail(Throwable error, NormalizedUsage usage, String responseModelId) {
         var status = UsageError.isTimeout(error) ? UsageStatus.TIMED_OUT
             : UsageError.isCancellation(error) ? UsageStatus.CANCELLED : UsageStatus.FAILED;
         finish(status, error, usage, responseModelId);
-    }
-
-    public void cancel() {
-        cancel(NormalizedUsage.missing(), null);
     }
 
     public void cancel(NormalizedUsage usage, String responseModelId) {
