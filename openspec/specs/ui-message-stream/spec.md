@@ -899,11 +899,14 @@ The SDK SHALL provide complete English JavaDoc for caller-facing UI Message APIs
 - **AND** it does not require long end-to-end examples for every record
 
 ### Requirement: UI Message API Polish Boundaries
-The SDK SHALL allow focused API polish when needed to stabilize the unreleased Java API.
+The SDK SHALL preserve compatibility for the public Java API released since v1.0.0 unless a
+change explicitly declares and plans a breaking change.
 
 #### Scenario: Naming or visibility can be corrected
 - **WHEN** the audit finds inconsistent naming or unnecessarily public helper APIs
-- **THEN** the implementation may rename or narrow them without compatibility shims
+- **THEN** the implementation uses compatible additions and deprecations by default
+- **AND** any rename, removal, or visibility narrowing identifies affected versions, migration
+  guidance, and release impact
 
 #### Scenario: Option boundaries remain explicit
 - **WHEN** options configure chat handling, stream creation, reading, validation, conversion, cancellation, or metadata

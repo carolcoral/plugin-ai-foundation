@@ -1,53 +1,29 @@
 schema: spec-driven
 
 context: |
-  Halo CMS plugin providing shared AI foundation capabilities for other plugins.
-  Multi-module Gradle: api (published Java SDK), app (plugin impl), ui (Vue 3 console).
-  This plugin has been released since v1.0.0. Public Java/npm SDK APIs, persisted
-  Extension schemas, and documented behavior are compatibility-sensitive.
+  Halo CMS plugin providing shared AI capabilities to other plugins.
+  Modules: api (public Java SDK), app (plugin implementation), and ui (Vue Console UI
+  plus the public npm SDK). The project has been released since v1.0.0.
 
-  Provider type system:
-  - Each provider is a single @Component class implementing AiProviderType, extending AbstractAiProviderType.
-  - One class = identity + metadata + behavior. No split between adapter and metadata.
-  - Discovered via Spring ApplicationContext.getBeansOfType(). Adding a provider = one new class, no frontend changes.
-  - Metadata exposed via REST API. Frontend must not hardcode provider type lists.
-
-  Extension model:
-  - AiProvider and AiModel are separate Extensions (GVK: aifoundation.halo.run/v1alpha1).
-  - AiModel.spec.providerName references AiProvider.metadata.name (resource name, not providerType).
-  - AiModelService lookups use AiModel.metadata.name as modelName.
-  - providerResourceName/modelId remains the underlying identity pair for display and uniqueness, not the service lookup key.
-
-  API key conventions:
-  - Stored as Halo Secret references (spec.apiKeySecretName), resolved at runtime by SecretResolver.
-  - Single Secret per provider. No multi-key rotation.
-
-  Client caching:
-  - ProviderClientCache caches ChatModel/EmbeddingModel instances by provider resource name + modelId.
-  - Cache invalidation happens on AiProvider update/delete and Secret update for providers referencing that Secret.
-
-  Embedding API:
-  - Two-layer: simple calls (embedQuery) + advanced EmbeddingRequest (dimensions, maxBatchSize, providerOptions).
-  - Public API must not expose Spring AI types.
-
-  Dev workflow:
-  - After backend changes: docker rm halo-for-plugin-development -f && ./gradlew haloServer
-  - After API/field changes: ./gradlew generateApiClient — frontend must use generated client, never hardcode paths.
-
-  Permission scope:
-  - This plugin is intended for super administrators to use and configure.
-  - Do not design or implement permission configuration for other user roles.
+  AiProvider and AiModel are Halo Extensions. AiModel.spec.providerName references
+  AiProvider.metadata.name, while AiModelService resolves models by AiModel.metadata.name.
+  Consumer plugins obtain AiModelService through Halo's ExtensionGetter.
 
 rules:
   proposal:
-    - Always include a non-goals section when scope is being reduced.
-    - Clearly state when a change is backend-only or UI-only.
+    - Include a non-goals section when reducing scope.
+    - State whether a change affects the backend, Console UI, Java SDK, npm SDK, persisted Extension data, or generated API contracts.
+    - Identify compatibility impact for every affected released surface.
   design:
-    - Preserve the distinction between providerType and provider resource name.
-    - Public embedding API must not expose Spring AI types.
-    - Preserve compatibility for public Java/npm SDK APIs, persisted Extension schemas, and documented behavior by default.
-    - For breaking changes, include an explicit migration plan and release impact assessment.
-    - Treat super administrator usage/configuration as the permission boundary; do not add role-specific permission configuration for other users.
+    - Preserve the distinction between provider type, provider resource name, model resource name, and provider-side model ID.
+    - Keep public SDK APIs provider-neutral and free of Spring AI types.
+    - Store provider credentials as Halo Secret references; never add plaintext credential fields to Extensions.
+    - Resolve cross-plugin services through ExtensionGetter; do not add static service locators or cross-plugin injection assumptions.
+    - Treat server-side validation as authoritative and provider metadata from the backend as the source of truth.
+    - Treat super administrator usage and configuration as the permission boundary; do not add role-specific permission configuration for other users.
+    - Preserve public Java/npm APIs, persisted Extension data, and externally documented contracts by default.
+    - For a breaking change, specify affected versions, migration or upgrade handling, and release impact.
   tasks:
-    - Put server-side validation before UI tasks when both exist.
-    - When UI is split to another change, remove UI tasks from the backend change instead of leaving placeholders.
+    - Put server-side validation before UI validation tasks when both are required.
+    - After backend API changes, regenerate the TypeScript client instead of editing generated files manually.
+    - When UI work is split into another change, remove its tasks instead of leaving placeholders.
