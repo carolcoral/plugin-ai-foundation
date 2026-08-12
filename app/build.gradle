@@ -37,6 +37,7 @@ dependencies {
     implementation 'org.springframework.ai:spring-ai-client-chat'
     implementation 'org.springframework.ai:spring-ai-deepseek'
     implementation 'org.springframework.ai:spring-ai-ollama'
+    implementation 'org.xerial:sqlite-jdbc:3.53.2.0'
 
     compileOnly 'run.halo.app:api'
 
