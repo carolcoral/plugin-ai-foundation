@@ -1,3 +1,4 @@
+import { utils } from '@halo-dev/ui-shared'
 import type { NormalizedUsage } from '@/api/generated'
 
 export const UNKNOWN_TEXT = '未知'
@@ -72,6 +73,17 @@ const QUALITY_BADGE_CLASSES: Record<string, string> = {
   MISSING: 'bg-red-50 text-red-700',
 }
 
+const INTEGER_FORMATTER = new Intl.NumberFormat('en-US', {
+  maximumFractionDigits: 0,
+})
+const DECIMAL_FORMATTER = new Intl.NumberFormat('en-US', {
+  maximumFractionDigits: 1,
+})
+const PERCENT_FORMATTER = new Intl.NumberFormat('en-US', {
+  style: 'percent',
+  maximumFractionDigits: 1,
+})
+
 function toLabelMap(options: readonly { label: string; value: string }[]) {
   return Object.fromEntries(options.map((item) => [item.value, item.label]))
 }
@@ -116,7 +128,7 @@ export function formatTokens(value?: number | null) {
   if (value === null || value === undefined) {
     return UNKNOWN_TEXT
   }
-  return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  return INTEGER_FORMATTER.format(value)
 }
 
 /** 用量覆盖率（0~1）展示为百分比，缺失时显示「未知」。 */
@@ -124,9 +136,8 @@ export function formatCoverage(value?: number | null) {
   if (value === null || value === undefined) {
     return UNKNOWN_TEXT
   }
-  const percent = value * 100
-  const rounded = percent >= 99.95 && percent < 100 ? 99.9 : Math.round(percent * 10) / 10
-  return `${rounded}%`
+  const displayValue = value >= 0.9995 && value < 1 ? 0.999 : value
+  return PERCENT_FORMATTER.format(displayValue)
 }
 
 export function usageResolutionLabel(value?: UsageDisplayedResolution | null) {
@@ -147,26 +158,19 @@ export function formatDuration(millis?: number | null) {
     return UNKNOWN_TEXT
   }
   if (millis < 1000) {
-    return `${millis} ms`
+    return `${INTEGER_FORMATTER.format(millis)} ms`
   }
   const seconds = millis / 1000
-  return `${seconds >= 100 ? Math.round(seconds) : Math.round(seconds * 10) / 10} s`
+  const formatter = seconds >= 100 ? INTEGER_FORMATTER : DECIMAL_FORMATTER
+  return `${formatter.format(seconds)} s`
 }
 
 /** ISO instant 转本地时间字符串，缺失时显示「未知」。 */
 export function formatDateTime(iso?: string | null) {
-  if (!iso) {
+  if (!iso || !utils.date.dayjs(iso).isValid()) {
     return UNKNOWN_TEXT
   }
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) {
-    return UNKNOWN_TEXT
-  }
-  const pad = (value: number) => String(value).padStart(2, '0')
-  return (
-    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
-    `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
-  )
+  return utils.date.format(iso, 'YYYY-MM-DD HH:mm:ss')
 }
 
 /** UTC 桶起始时间按分辨率展示；DAY 分辨率只展示日期，避免暗示小时精度。 */
@@ -178,7 +182,9 @@ export function formatBucketStart(
     return UNKNOWN_TEXT
   }
   if (resolution === 'DAY') {
-    return iso.slice(0, 10)
+    return utils.date.dayjs(iso).isValid()
+      ? utils.date.toISOString(iso).slice(0, 10)
+      : UNKNOWN_TEXT
   }
   return formatDateTime(iso)
 }
