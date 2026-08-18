@@ -1505,6 +1505,79 @@ describe('Chat', () => {
     ).toBe(false)
   })
 
+  it('waits for external output while preserving server output in a mixed tool batch', async () => {
+    const transport = new SequenceTransport([
+      [
+        {
+          type: 'tool-input-available',
+          toolCallId: 'call-1',
+          toolName: 'beginDraft',
+          input: {},
+        },
+        {
+          type: 'tool-input-available',
+          toolCallId: 'call-2',
+          toolName: 'delegateResearch',
+          input: { topic: 'Vue' },
+        },
+        {
+          type: 'tool-output-available',
+          toolCallId: 'call-2',
+          toolName: 'delegateResearch',
+          output: { summary: 'done' },
+        },
+        {
+          type: 'finish-step',
+          finishReason: 'tool-calls',
+          rawFinishReason: 'TOOL_CALLS',
+        },
+        {
+          type: 'finish',
+          finishReason: 'tool-calls',
+          rawFinishReason: 'TOOL_CALLS',
+        },
+      ],
+      [{ type: 'text-delta', id: 'text-1', delta: 'Done' }],
+    ])
+    const chat = new Chat({
+      id: 'chat-1',
+      transport,
+      generateId: () => 'assistant-1',
+      sendAutomaticallyWhen: lastAssistantMessageHasCompletedToolContinuations,
+      onToolCall: (part) => {
+        if (part.toolName !== 'beginDraft') {
+          return
+        }
+        void chat.addToolOutput({
+          toolCallId: part.toolCallId,
+          toolName: part.toolName,
+          output: { started: true },
+        })
+      },
+    })
+
+    await chat.sendMessage({ text: 'Write about Vue' })
+
+    expect(transport.calls).toHaveLength(2)
+    expect(chat.messages[1].parts).toContainEqual(
+      expect.objectContaining({
+        type: 'tool-beginDraft',
+        toolCallId: 'call-1',
+        state: 'output-available',
+        output: { started: true },
+      }),
+    )
+    expect(chat.messages[1].parts).toContainEqual(
+      expect.objectContaining({
+        type: 'tool-delegateResearch',
+        toolCallId: 'call-2',
+        state: 'output-available',
+        output: { summary: 'done' },
+      }),
+    )
+    expect(messageText(chat.messages[1])).toBe('Done')
+  })
+
   it('auto submits multiple distinct completed tool states until final text', async () => {
     const transport = new SequenceTransport([
       [{ type: 'tool-input-available', toolCallId: 'call-1', toolName: 'search' }],

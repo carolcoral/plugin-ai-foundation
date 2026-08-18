@@ -2518,7 +2518,7 @@ class LanguageModelImplTest {
     }
 
     @Test
-    void streamText_stopsMixedExecutableAndApprovalToolCallsWithoutUnresolvedCalls() {
+    void streamText_executesReadyToolAlongsideApprovalRequest() {
         var chatModel = mock(ChatModel.class);
         when(chatModel.stream(any(Prompt.class))).thenReturn(
             Flux.just(multiToolCallResponse(List.of(
@@ -2562,6 +2562,7 @@ class LanguageModelImplTest {
                     PartType.TOOL_CALL,
                     PartType.TOOL_CALL,
                     PartType.TOOL_APPROVAL_REQUEST,
+                    PartType.TOOL_RESULT,
                     PartType.FINISH_STEP,
                     PartType.FINISH
                 ))
@@ -2573,18 +2574,115 @@ class LanguageModelImplTest {
                     .extracting(ToolCall::getToolCallId)
                     .containsExactly("call_1", "call_2");
                 assertThat(finalResult.getToolApprovalRequests()).hasSize(1);
-                assertThat(finalResult.getToolResults()).isEmpty();
+                assertThat(finalResult.getToolResults())
+                    .extracting(ToolResult::getToolCallId)
+                    .containsExactly("call_1");
                 assertThat(finalResult.getResponseMessages().stream()
                     .flatMap(message -> message.getContent().stream())
                     .map(ModelMessagePart::getType))
                     .containsExactly(
                         PartType.TOOL_CALL,
-                        PartType.TOOL_APPROVAL_REQUEST
+                        PartType.TOOL_CALL,
+                        PartType.TOOL_APPROVAL_REQUEST,
+                        PartType.TOOL_RESULT
                     );
             })
             .verifyComplete();
 
-        assertThat(executions).hasValue(0);
+        assertThat(executions).hasValue(1);
+        verify(chatModel).stream(any(Prompt.class));
+    }
+
+    @Test
+    void streamText_classifiesExternalApprovalAndServerToolsInOneBatch() {
+        var chatModel = mock(ChatModel.class);
+        when(chatModel.stream(any(Prompt.class))).thenReturn(
+            Flux.just(multiToolCallResponse(List.of(
+                new AssistantMessage.ToolCall("call_1", "function", "beginDraft", "{}"),
+                new AssistantMessage.ToolCall("call_2", "function", "run",
+                    "{\"command\":\"rm file\"}"),
+                new AssistantMessage.ToolCall("call_3", "function", "weather",
+                    "{\"location\":\"SF\"}")
+            ), 2, 3))
+        );
+        var model = new LanguageModelImpl(chatModel, "openai");
+        var executions = new AtomicInteger();
+
+        var request = GenerateTextRequest.builder()
+            .prompt("Use tools")
+            .tools(List.of(
+                ToolDefinition.builder().name("beginDraft").build(),
+                ToolDefinition.builder()
+                    .name("run")
+                    .needsApproval(true)
+                    .executor(context -> {
+                        executions.incrementAndGet();
+                        return Mono.just(Map.of("ok", true));
+                    })
+                    .build(),
+                ToolDefinition.builder()
+                    .name("weather")
+                    .executor(context -> {
+                        executions.incrementAndGet();
+                        return Mono.just(Map.of("temperature", 22));
+                    })
+                    .build()
+            ))
+            .stopWhen(StopCondition.stepCountIs(2))
+            .build();
+        var result = model.streamText(request);
+
+        StepVerifier.create(result.fullStream().collectList())
+            .assertNext(parts -> {
+                assertThat(parts).extracting(TextStreamPart::getType)
+                    .containsExactly(
+                        PartType.START,
+                        PartType.START_STEP,
+                        PartType.TOOL_CALL,
+                        PartType.TOOL_CALL,
+                        PartType.TOOL_CALL,
+                        PartType.TOOL_APPROVAL_REQUEST,
+                        PartType.TOOL_RESULT,
+                        PartType.FINISH_STEP,
+                        PartType.FINISH
+                    );
+                assertThat(parts.stream()
+                    .filter(part -> PartType.TOOL_RESULT.equals(part.getType()))
+                    .findFirst()
+                    .orElseThrow()
+                    .getToolCallId())
+                    .isEqualTo("call_3");
+                assertThat(parts.stream()
+                    .filter(part -> PartType.FINISH_STEP.equals(part.getType()))
+                    .findFirst()
+                    .orElseThrow()
+                    .getWarnings())
+                    .extracting("code")
+                    .contains("external-tool-pending");
+            })
+            .verifyComplete();
+
+        StepVerifier.create(result.result())
+            .assertNext(finalResult -> {
+                assertThat(finalResult.getToolCalls())
+                    .extracting(ToolCall::getToolCallId)
+                    .containsExactly("call_1", "call_2", "call_3");
+                assertThat(finalResult.getToolApprovalRequests())
+                    .singleElement()
+                    .satisfies(approval -> assertThat(approval.getToolCallId())
+                        .isEqualTo("call_2"));
+                assertThat(finalResult.getToolResults())
+                    .extracting(ToolResult::getToolCallId)
+                    .containsExactly("call_3");
+                assertThat(finalResult.getResponseMessages().stream()
+                    .flatMap(message -> message.getContent().stream())
+                    .map(ModelMessagePart::getToolCallId)
+                    .filter(java.util.Objects::nonNull))
+                    .containsExactly("call_1", "call_2", "call_3", "call_2", "call_3");
+            })
+            .verifyComplete();
+
+        assertThat(executions).hasValue(1);
         verify(chatModel).stream(any(Prompt.class));
     }
 
@@ -3523,7 +3621,7 @@ class LanguageModelImplTest {
     }
 
     @Test
-    void streamText_stopsMixedExecutableAndExternalToolCallsWithoutContinuation() {
+    void streamText_executesServerToolInMixedExternalBatchWithoutContinuation() {
         var chatModel = mock(ChatModel.class);
         when(chatModel.stream(any(Prompt.class))).thenReturn(
             Flux.just(multiToolCallResponse(List.of(
@@ -3562,12 +3660,17 @@ class LanguageModelImplTest {
                         PartType.START_STEP,
                         PartType.TOOL_CALL,
                         PartType.TOOL_CALL,
+                        PartType.TOOL_RESULT,
                         PartType.FINISH_STEP,
                         PartType.FINISH
                     );
-                assertThat(parts)
-                    .noneMatch(part -> PartType.TOOL_RESULT.equals(part.getType()))
-                    .noneMatch(part -> PartType.TOOL_ERROR.equals(part.getType()));
+                assertThat(parts.stream()
+                    .filter(part -> PartType.TOOL_RESULT.equals(part.getType()))
+                    .findFirst()
+                    .orElseThrow()
+                    .getToolCallId())
+                    .isEqualTo("call_1");
+                assertThat(parts).noneMatch(part -> PartType.TOOL_ERROR.equals(part.getType()));
                 assertThat(parts.stream()
                     .filter(part -> PartType.FINISH_STEP.equals(part.getType()))
                     .findFirst()
@@ -3583,17 +3686,85 @@ class LanguageModelImplTest {
                 assertThat(finalResult.getToolCalls())
                     .extracting(ToolCall::getToolCallId)
                     .containsExactly("call_1", "call_2");
-                assertThat(finalResult.getToolResults()).isEmpty();
+                assertThat(finalResult.getToolResults())
+                    .extracting(ToolResult::getToolCallId)
+                    .containsExactly("call_1");
                 assertThat(finalResult.getToolErrors()).isEmpty();
                 assertThat(finalResult.getResponseMessages())
-                    .singleElement()
-                    .satisfies(message -> assertThat(message.getContent())
-                        .extracting(ModelMessagePart::getToolCallId)
-                        .containsExactly("call_2"));
+                    .extracting(ModelMessage::getRole)
+                    .containsExactly(ModelMessageRole.ASSISTANT, ModelMessageRole.TOOL);
+                assertThat(finalResult.getResponseMessages().getFirst().getContent())
+                    .extracting(ModelMessagePart::getToolCallId)
+                    .containsExactly("call_1", "call_2");
+                assertThat(finalResult.getResponseMessages().getLast().getContent())
+                    .extracting(ModelMessagePart::getToolCallId)
+                    .containsExactly("call_1");
             })
             .verifyComplete();
 
-        assertThat(executions).hasValue(0);
+        assertThat(executions).hasValue(1);
+        verify(chatModel).stream(any(Prompt.class));
+    }
+
+    @Test
+    void streamText_emitsServerToolErrorInMixedExternalBatch() {
+        var chatModel = mock(ChatModel.class);
+        when(chatModel.stream(any(Prompt.class))).thenReturn(
+            Flux.just(multiToolCallResponse(List.of(
+                new AssistantMessage.ToolCall("call_1", "function", "search",
+                    "{\"query\":\"Halo\"}"),
+                new AssistantMessage.ToolCall("call_2", "function", "unstable", "{}")
+            ), 2, 3))
+        );
+        var model = new LanguageModelImpl(chatModel, "openai");
+
+        var request = GenerateTextRequest.builder()
+            .prompt("Use tools")
+            .tools(List.of(
+                ToolDefinition.builder().name("search").build(),
+                ToolDefinition.builder()
+                    .name("unstable")
+                    .executor(context -> Mono.error(new IllegalStateException("failed")))
+                    .build()
+            ))
+            .stopWhen(StopCondition.stepCountIs(2))
+            .build();
+        var result = model.streamText(request);
+
+        StepVerifier.create(result.fullStream().collectList())
+            .assertNext(parts -> {
+                assertThat(parts).extracting(TextStreamPart::getType)
+                    .containsExactly(
+                        PartType.START,
+                        PartType.START_STEP,
+                        PartType.TOOL_CALL,
+                        PartType.TOOL_CALL,
+                        PartType.TOOL_ERROR,
+                        PartType.FINISH_STEP,
+                        PartType.FINISH
+                    );
+                var error = parts.stream()
+                    .filter(part -> PartType.TOOL_ERROR.equals(part.getType()))
+                    .findFirst()
+                    .orElseThrow();
+                assertThat(error.getToolCallId()).isEqualTo("call_2");
+                assertThat(error.getErrorText()).contains("failed");
+            })
+            .verifyComplete();
+
+        StepVerifier.create(result.result())
+            .assertNext(finalResult -> {
+                assertThat(finalResult.getToolCalls())
+                    .extracting(ToolCall::getToolCallId)
+                    .containsExactly("call_1", "call_2");
+                assertThat(finalResult.getToolErrors())
+                    .extracting(ToolError::getToolCallId)
+                    .containsExactly("call_2");
+                assertThat(finalResult.getWarnings()).extracting("code")
+                    .contains("external-tool-pending");
+            })
+            .verifyComplete();
+
         verify(chatModel).stream(any(Prompt.class));
     }
 
